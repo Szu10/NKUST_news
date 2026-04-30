@@ -12,7 +12,7 @@ SENDER_EMAIL = os.environ.get('SENDER_EMAIL')
 APP_PASSWORD = os.environ.get('APP_PASSWORD')
 RECEIVER_EMAIL = os.environ.get('RECEIVER_EMAIL')
 
-KEYWORDS = '"國立高雄科技大學" OR "高科大" OR "NKUST"'
+KEYWORDS = '"國立高雄科技大學" OR "高科大" OR "NKUST" OR "高雄科大" OR "高雄科技大學"'
 
 def get_original_url(google_url):
     """模擬瀏覽器點擊，獲取跳轉後的真實新聞網址"""
@@ -66,7 +66,7 @@ def send_email(news_items):
     receiver_list = [email.strip() for email in RECEIVER_EMAIL.split(',')]
 
     msg = MIMEMultipart("alternative")
-    msg['Subject'] = f"NKUST新聞搜尋小幫手 - {datetime.now().strftime('%Y-%m-%d')}"
+    msg['Subject'] = f"NKUST新聞日報 - {datetime.now().strftime('%Y-%m-%d')}"
     msg['From'] = SENDER_EMAIL
     msg['To'] = ", ".join(receiver_list)
 
