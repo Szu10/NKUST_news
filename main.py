@@ -46,12 +46,11 @@ def send_email(news_items):
     html_content = "<h2>NKUST每日新聞彙整</h2><hr>"
     for item in news_items:
         html_content += f"""
-        <div style='margin-bottom: 20px;'>
-            <h3 style='margin: 0;'><a href='{item['link']}'>{item['title']}</a></h3>
-            <p style='margin: 5px 0; color: #555;'>
-                <strong>來源:</strong> {item['agency']} <br>
-                <strong>日期:</strong> {item['date']}
-            </p>
+        <div style='margin-bottom: 25px; line-height: 1.6; font-size: 15px;'>
+            <strong style='font-size: 18px;'>{item['title']}</strong><br>
+            <a href='{item['link']}' style='word-break: break-all;'>{item['link']}</a><br>
+            <strong>來源：</strong> {item['agency']}<br>
+            <strong>時間：</strong> {item['date']}
         </div>
         """
         
