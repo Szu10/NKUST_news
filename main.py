@@ -15,7 +15,7 @@ KEYWORDS = '"國立高雄科技大學" OR "高科大" OR "NKUST" OR "高雄科�
 
 def fetch_nkust_news():
     encoded_query = urllib.parse.quote(KEYWORDS)
-    rss_url = f"https://news.google.com/rss/search?q={encoded_query} when:1d&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
+    rss_url = f"https://news.google.com/rss/search?q={encoded_query}%20when:1d&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
     
     feed = feedparser.parse(rss_url)
     news_items = []
