@@ -5,7 +5,7 @@ import requests
 import time      
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from datetime import datetime
+from datetime import datetime, timedelta, timezone  # 新增 timedelta 與 timezone 處理時區
 import os
 
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL')
@@ -27,8 +27,20 @@ def get_original_url(google_url):
         return google_url
 
 def fetch_nkust_news():
-    encoded_query = urllib.parse.quote(KEYWORDS)
-    rss_url = f"https://news.google.com/rss/search?q={encoded_query}%20when:1d&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
+    # --- 新增：設定台灣時區 (UTC+8)，並自動計算昨天與今天 ---
+    tw_tz = timezone(timedelta(hours=8))
+    now_tw = datetime.now(tw_tz)
+    yesterday_str = (now_tw - timedelta(days=1)).strftime('%Y-%m-%d')
+    today_str = now_tw.strftime('%Y-%m-%d')
+    
+    # 把原本的 KEYWORDS 加上精確的日期範圍
+    # 組合出來會像是: "..." after:2026-04-29 before:2026-04-30 (這樣會剛好抓滿 4/29 整天)
+    search_query = f'{KEYWORDS} after:{yesterday_str} before:{today_str}'
+    encoded_query = urllib.parse.quote(search_query)
+    
+    # 網址拿掉 when:1d，改用上面組合好的精確條件
+    rss_url = f"https://news.google.com/rss/search?q={encoded_query}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
+    # --------------------------------------------------------
     
     feed = feedparser.parse(rss_url)
     news_items = []
@@ -45,11 +57,8 @@ def fetch_nkust_news():
         
         real_link = get_original_url(google_link)
         
-        # --- 處理日期格式的精華區段 ---
-        raw_date = entry.published  # 這裡會拿到 "Thu, 30 Apr 2026 01:59:48 GMT"
-        # 將字串用空格分開，並只取前 4 個元素組合起來 (Thu, 30 Apr 2026)
+        raw_date = entry.published  
         clean_date = " ".join(raw_date.split()[:4])
-        # ----------------------------
         
         news_items.append({
             'title': title, 
@@ -68,9 +77,13 @@ def send_email(news_items):
         return
 
     receiver_list = [email.strip() for email in RECEIVER_EMAIL.split(',')]
+    
+    # 寄信時的標題也改用台灣時區，確保顯示的日期不會因為伺服器時差出錯
+    tw_tz = timezone(timedelta(hours=8))
+    today_date = datetime.now(tw_tz).strftime('%Y-%m-%d')
 
     msg = MIMEMultipart("alternative")
-    msg['Subject'] = f"NKUST新聞日報 - {datetime.now().strftime('%Y-%m-%d')}"
+    msg['Subject'] = f"NKUST新聞日報 - {today_date}"
     msg['From'] = SENDER_EMAIL
     msg['To'] = ", ".join(receiver_list)
 
