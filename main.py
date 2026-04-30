@@ -1,8 +1,8 @@
 import feedparser
 import urllib.parse
 import smtplib
-import requests  # 用來解析真實網址
-import time      # 用來稍微暫停避免被 Google 封鎖
+import requests  
+import time      
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
@@ -20,7 +20,6 @@ def get_original_url(google_url):
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
-        # 跟隨跳轉直到獲取最終網址
         response = requests.get(google_url, headers=headers, allow_redirects=True, timeout=10)
         return response.url
     except Exception as e:
@@ -29,7 +28,6 @@ def get_original_url(google_url):
 
 def fetch_nkust_news():
     encoded_query = urllib.parse.quote(KEYWORDS)
-    # 搜尋台灣地區、繁體中文、過去1天的新聞
     rss_url = f"https://news.google.com/rss/search?q={encoded_query}%20when:1d&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
     
     feed = feedparser.parse(rss_url)
@@ -45,19 +43,21 @@ def fetch_nkust_news():
         google_link = entry.link
         print(f"正在處理: {title[:15]}...")
         
-        # 嘗試獲取原始新聞網址
         real_link = get_original_url(google_link)
         
-        pub_date = entry.published
+        # --- 處理日期格式的精華區段 ---
+        raw_date = entry.published  # 這裡會拿到 "Thu, 30 Apr 2026 01:59:48 GMT"
+        # 將字串用空格分開，並只取前 4 個元素組合起來 (Thu, 30 Apr 2026)
+        clean_date = " ".join(raw_date.split()[:4])
+        # ----------------------------
         
         news_items.append({
             'title': title, 
             'agency': source, 
             'link': real_link, 
-            'date': pub_date
+            'date': clean_date
         })
         
-        # 暫停一秒避免存取太快
         time.sleep(1)
         
     return news_items
@@ -74,7 +74,6 @@ def send_email(news_items):
     msg['From'] = SENDER_EMAIL
     msg['To'] = ", ".join(receiver_list)
 
-    # 格式改回：標題連結、來源、時間
     html_content = "<h2>高科大每日新聞彙整</h2><hr>"
     for item in news_items:
         html_content += f"""
