@@ -39,11 +39,11 @@ def send_email(news_items):
         return
 
     msg = MIMEMultipart("alternative")
-    msg['Subject'] = f"NKUST每日新聞搜尋 - {datetime.now().strftime('%Y-%m-%d')}"
+    msg['Subject'] = f"NKUST新聞日報 - {datetime.now().strftime('%Y-%m-%d')}"
     msg['From'] = SENDER_EMAIL
     msg['To'] = RECEIVER_EMAIL
 
-    html_content = "<h2>Daily NKUST News Update</h2><hr>"
+    html_content = "<h2>NKUST每日新聞彙整</h2><hr>"
     for item in news_items:
         html_content += f"""
         <div style='margin-bottom: 20px;'>
