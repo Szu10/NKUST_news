@@ -35,11 +35,11 @@ def fetch_nkust_news():
 
 def send_email(news_items):
     if not news_items:
-        print("No new news found today.")
+        print("今天沒有找到相關的新聞。")
         return
 
     msg = MIMEMultipart("alternative")
-    msg['Subject'] = f"Daily NKUST News - {datetime.now().strftime('%Y-%m-%d')}"
+    msg['Subject'] = f"NKUST每日新聞搜尋 - {datetime.now().strftime('%Y-%m-%d')}"
     msg['From'] = SENDER_EMAIL
     msg['To'] = RECEIVER_EMAIL
 
@@ -49,8 +49,8 @@ def send_email(news_items):
         <div style='margin-bottom: 20px;'>
             <h3 style='margin: 0;'><a href='{item['link']}'>{item['title']}</a></h3>
             <p style='margin: 5px 0; color: #555;'>
-                <strong>Agency:</strong> {item['agency']} <br>
-                <strong>Date:</strong> {item['date']}
+                <strong>來源:</strong> {item['agency']} <br>
+                <strong>日期:</strong> {item['date']}
             </p>
         </div>
         """
