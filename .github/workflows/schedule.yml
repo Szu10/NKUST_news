@@ -1,0 +1,32 @@
+name: Daily NKUST News Bot
+
+on:
+  schedule:
+    # This runs at 00:00 UTC every day, which is 8:00 AM CST (Taiwan Time)
+    - cron: '0 0 * * *'
+  workflow_dispatch: # This allows you to run it manually by clicking a button
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Run news scraper and send email
+        env:
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
+        run: python main.py
