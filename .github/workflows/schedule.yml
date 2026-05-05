@@ -2,7 +2,7 @@ name: Daily NKUST News Bot
 
 on:
   schedule:
-    - cron: '18 0 * * *'
+    - cron: '18 1 * * *'
   workflow_dispatch: 
 
 jobs:
