@@ -1,7 +1,5 @@
 name: Daily NKUST News Bot
 
-name: Daily NKUST News Bot
-
 on:
   schedule:
     - cron: '18 1 * * *'
