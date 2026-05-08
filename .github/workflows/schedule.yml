@@ -1,8 +1,12 @@
 name: Daily NKUST News Bot
 
+# Add these two lines right here!
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   schedule:
-    - cron: '18 1 * * *'
+    - cron: '40 1 * * *'
   workflow_dispatch: 
 
 jobs:
@@ -10,11 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      # Updated from v3 to v4
       - name: Checkout repository
         uses: actions/checkout@v4
         
-      # Updated from v4 to v5
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
