@@ -1,32 +1,29 @@
 name: Daily NKUST News Bot
 
-# Add these two lines right here!
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 on:
   schedule:
-    - cron: '40 0 * * *'
-  workflow_dispatch: 
+    - cron: '40 0 * * *'  # 每天 UTC 00:40 = 台灣時間 08:40
+  workflow_dispatch:       # 保留手動觸發，方便測試
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 15    # FIX: 防止網路卡住導致 job 跑滿 6 小時
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          
+
       - name: Run news scraper and send email
         env:
           SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
