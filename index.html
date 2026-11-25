@@ -48,7 +48,7 @@ textarea,input[type=text],input[type=date]{font:inherit;color:var(--ink);backgro
 textarea{resize:vertical;line-height:1.55}
 textarea.mono{font-family:var(--f-mono);font-size:.82rem}
 textarea:focus,input:focus,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.row2{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:12px}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:12px;align-items:end}
 @media (max-width:560px){.row2{grid-template-columns:minmax(0,1fr)}}
 .btns{display:flex;flex-wrap:wrap;gap:8px}
 button{font:inherit;font-size:.9rem;border-radius:4px;padding:7px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
@@ -91,14 +91,29 @@ select{font:inherit;font-size:.8rem;color:var(--ink);background:var(--surface-2)
 .btnlink{display:inline-flex;align-items:center;font-size:.9rem;border-radius:4px;padding:7px 14px;border:1px solid var(--accent);color:var(--accent);text-decoration:none;font-weight:500}
 .btnlink[aria-disabled="true"]{opacity:.45;pointer-events:none}
 button:disabled{opacity:.45;cursor:not-allowed}
-.weblist{display:flex;flex-direction:column;border-top:1px solid var(--line)}
-.weblist:empty{border-top:0}
-.wr{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;padding:8px 0;border-bottom:1px solid var(--line);align-items:start}
-.wr .wt{min-width:0;display:flex;flex-direction:column;gap:2px}
-.wr .wt a{color:var(--ink);text-decoration:none;font-weight:500;overflow-wrap:anywhere}
-.wr .wt a:hover{text-decoration:underline}
-.wr .wm{display:flex;flex-wrap:wrap;gap:4px 8px;font-size:.78rem;color:var(--muted);align-items:center;font-variant-numeric:tabular-nums}
-.wr.dim{opacity:.6}
+.kwchips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.kwchip{display:inline-flex;align-items:center;gap:2px;padding:2px 4px 2px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:.85rem}
+.kwchip button{border:0;background:none;color:inherit;padding:0 6px;font-size:.9rem;line-height:1}
+.kwchips input{width:9em;padding:3px 10px;border-radius:999px;font-size:.85rem;border-style:dashed}
+.kwsrc{font-size:.75rem;color:var(--ok)}
+.srcline{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:.85rem;color:var(--muted)}
+.srcline select{font-size:.85rem}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tile{background:var(--surface-2);border-radius:4px;padding:8px 12px;display:flex;flex-direction:column}
+.tile span{font-size:.78rem;color:var(--muted)}
+.tile strong{font-size:1.3rem;font-weight:500;font-variant-numeric:tabular-nums}
+.wtable{border-top:1px solid var(--ink);min-width:0}
+.wrow{display:grid;grid-template-columns:22px 150px minmax(0,1fr) 52px 104px;gap:10px;align-items:center;padding:7px 2px;border-bottom:1px solid var(--line);font-size:.88rem}
+.wrow.whead{font-size:.78rem;color:var(--muted)}
+.wrow .wmed{font-weight:500;overflow-wrap:anywhere}
+.wrow .wmed small{display:block;font-weight:400;color:var(--muted);font-size:.75rem}
+.wrow .wttl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);text-decoration:none}
+.wrow .wttl:hover{text-decoration:underline}
+.wrow .wdate{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.8rem}
+.wrow.sub .wmed{padding-left:12px}
+.wrow.in{opacity:.6}
+.wother summary{cursor:pointer;color:var(--muted);font-size:.85rem;padding:8px 2px}
+@media (max-width:640px){.wrow{grid-template-columns:22px minmax(0,1fr) 96px}.wrow .wttl{grid-column:2 / -1;grid-row:2;white-space:normal}.wrow .wdate{display:none}.wrow.whead{display:none}}
 .tabs{display:flex;gap:0;border-bottom:1px solid var(--line)}
 .tabs button{border:0;border-bottom:2px solid transparent;border-radius:0;background:none;color:var(--muted);padding:6px 14px}
 .tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
@@ -164,20 +179,42 @@ details.cfg summary{cursor:pointer;font-weight:500}
       <section class="panel" aria-labelledby="h-web" id="webPanel">
         <div class="step"><b>STEP 2+</b><h2 id="h-web">網路搜尋媒體露出</h2></div>
         <p class="hint" id="webHint"></p>
-        <label class="f">搜尋關鍵詞（新聞稿標題會自動加入；人名、比賽名從全文自動抓取，可自行修改，用 | 分隔）
-          <input type="text" id="kw" placeholder="貼上新聞稿全文後會自動抓取，也可以自己輸入"></label>
-        <div class="opts">
-          <label><input type="checkbox" id="optLookup" checked> 一併查詢 <strong id="pendCount">0</strong> 則待查連結的標題與內文（沒標題、短網址、或標題差異大的）</label>
-          <label>搜尋範圍
+        <div class="f">
+          <span>搜尋關鍵詞 <span id="kwSrc" class="kwsrc"></span>（從新聞稿全文自動辨識，可按 × 刪除或自行新增；新聞稿標題會自動一起搜）</span>
+          <div class="kwchips" id="kwChips"></div>
+          <input type="hidden" id="kw">
+        </div>
+        <div class="srcline">
+          <span><span aria-hidden="true">✓</span> Google 新聞</span>
+          <span><span aria-hidden="true">✓</span> Bing 新聞</span>
+          <span><span aria-hidden="true">✓</span> 媒體網站逐一搜尋（排序表 <strong id="siteCount">0</strong> 個網域）</span>
+          <span id="iaiLine"></span>
+          <label>範圍
             <select id="days"><option value="3">最近 3 天</option><option value="7">最近 7 天</option><option value="14">最近 14 天</option><option value="30">最近 30 天</option></select></label>
+        </div>
+        <div class="opts">
+          <label><input type="checkbox" id="optLookup" checked> 一併讀取 <strong id="pendCount">0</strong> 則 LINE 待查連結的標題與內文</label>
         </div>
         <div class="btns">
           <button class="primary" id="btnSearch">搜尋網路露出</button>
-          <button id="btnKwReset">重新抓取關鍵詞</button>
+          <button id="btnKwReset">重新辨識關鍵詞</button>
         </div>
         <div class="stats" id="webMeta"></div>
-        <div class="weblist" id="webList"></div>
-        <div class="btns"><button class="primary" id="btnAddWeb" hidden>把勾選的加入彙編</button></div>
+        <div class="tiles" id="webTiles" hidden>
+          <div class="tile"><span>找到報導</span><strong id="tFound">0</strong></div>
+          <div class="tile"><span>判斷相關</span><strong id="tRel">0</strong></div>
+          <div class="tile"><span>已在彙編中</span><strong id="tIn">0</strong></div>
+        </div>
+        <div class="wtable" id="webTable" hidden>
+          <div class="wrow whead"><span></span><span>媒體（依排序）</span><span>新聞標題</span><span>日期</span><span>判斷</span></div>
+          <div id="webList"></div>
+          <details class="wother" id="webOther"><summary>判斷無關的 <span id="otherCount">0</span> 則（展開可手動勾選）</summary><div id="webOtherList"></div></details>
+        </div>
+        <div class="btns" id="webBtns" hidden>
+          <button id="btnPickRel">全選相關</button>
+          <button id="btnPickNone">全部取消</button>
+          <button class="primary" id="btnAddWeb">把勾選的 0 則加入彙編</button>
+        </div>
       </section>
 
       <section class="panel" aria-labelledby="h-s3">
@@ -784,11 +821,11 @@ if(typeof document!=='undefined'){
     it.keep=true; items.forEach(x=>{ if(x.parent===id && x.keep===false) delete x.keep; }); refresh(); });
   $('btnParse').onclick=()=>runParse(false);
   $('btnAppend').onclick=()=>runParse(true);
-  $('btnClear').onclick=()=>{ $('paste').value=''; rels=[blankRel()]; renderRels(); $('kw').value=''; kwEdited=false; items=[]; refresh(); };
+  $('btnClear').onclick=()=>{ $('paste').value=''; rels=[blankRel()]; renderRels(); $('kw').value=''; renderKw(); kwEdited=false; items=[]; refresh(); };
   $('btnAdd').onclick=()=>{ items.push({id:Math.random().toString(36).slice(2,9),media:'',platform:'',title:'',url:'',host:'',flag:'',rel:0}); renderItems(); };
   $('date').addEventListener('input',renderOut);
   $('optCount').addEventListener('change',renderOut);
-  $('btnCfgSave').onclick=()=>{ store.set('mx_main_v7',$('cfgMain').value); store.set('mx_agg_v7',$('cfgAgg').value); store.set('mx_endpoint',$('cfgEndpoint').value.trim()); syncEndpointUI(); loadCfg(); refresh(); toast('設定已儲存，已重新排序'); };
+  $('btnCfgSave').onclick=()=>{ setTimeout(updateSiteCount,0); store.set('mx_main_v7',$('cfgMain').value); store.set('mx_agg_v7',$('cfgAgg').value); store.set('mx_endpoint',$('cfgEndpoint').value.trim()); syncEndpointUI(); loadCfg(); refresh(); toast('設定已儲存，已重新排序'); };
   $('btnCfgReset').onclick=()=>{ store.set('mx_main_v7',DEFAULT_MAIN); store.set('mx_agg_v7',DEFAULT_AGG); loadCfg(); refresh(); toast('已恢復預設媒體設定'); };
   $('btnCopy').onclick=()=>copyText($('out').textContent,'已複製，可以貼到 LINE 了',$('out'));
   /* ---- 網路搜尋（Google Apps Script 搜尋服務）---- */
@@ -801,10 +838,34 @@ if(typeof document!=='undefined'){
       :'還沒有設定搜尋服務：請管理者到頁面下方「媒體排序與網域設定」貼上 Google Apps Script 網址。';
   }
   /* 關鍵詞 */
-  let kwEdited=false;
-  function autoKw(){ if(kwEdited) return; $('kw').value=Core.keywords(releases(), bodies()).join(' | '); }
-  $('kw').addEventListener('input',()=>{ kwEdited=true; renderOut(); });
-  $('btnKwReset').onclick=()=>{ kwEdited=false; autoKw(); renderOut(); toast('已從新聞稿全文重新抓取關鍵詞'); };
+  let kwEdited=false, kwFrom='';
+  const getKw=()=>$('kw').value.split(/[|｜]/).map(x=>x.trim()).filter(Boolean);
+  function setKw(list){ $('kw').value=[...new Set(list)].join(' | '); renderKw(); }
+  function renderKw(){
+    $('kwChips').innerHTML=getKw().map((k,i)=>`<span class="kwchip">${esc(k)}<button data-kwdel="${i}" aria-label="刪除 ${esc(k)}">×</button></span>`).join('')+
+      `<input type="text" id="kwNew" placeholder="＋ 新增關鍵詞" aria-label="新增關鍵詞">`;
+    $('kwSrc').textContent=kwFrom==='iai'?'iAI 建議':'';
+  }
+  $('kwChips').addEventListener('click',e=>{ const i=e.target.dataset.kwdel; if(i===undefined) return; const l=getKw(); l.splice(+i,1); kwEdited=true; setKw(l); renderOut(); });
+  $('kwChips').addEventListener('keydown',e=>{ if(e.target.id!=='kwNew'||e.key!=='Enter') return; e.preventDefault(); const v=e.target.value.trim(); if(!v) return; kwEdited=true; setKw(getKw().concat(v)); renderOut(); $('kwNew').focus(); });
+  $('kwChips').addEventListener('focusout',e=>{ if(e.target.id!=='kwNew') return; const v=e.target.value.trim(); if(v){ kwEdited=true; setKw(getKw().concat(v)); renderOut(); } });
+  let kwTimer=null, kwSig='';
+  function autoKw(){
+    if(kwEdited) return;
+    kwFrom=''; setKw(Core.keywords(releases(), bodies()));
+    clearTimeout(kwTimer); kwTimer=setTimeout(iaiKw,1500);
+  }
+  async function iaiKw(){
+    const ep=endpoint(), b=bodies().join('\n'); if(!ep||kwEdited||b.length<80) return;
+    const sig=releases().join('|')+b.length; if(sig===kwSig) return; kwSig=sig;
+    try{
+      const res=await fetch(ep,{method:'POST', body:JSON.stringify({action:'keywords', releases:releases(), bodies:bodies().map(x=>x.slice(0,2000))})});
+      const d=await res.json(); setIai(d.source);
+      if(d.keywords&&d.keywords.length&&!kwEdited){ kwFrom='iai'; setKw(d.keywords.concat(getKw()).slice(0,10)); renderOut(); }
+    }catch(e){}
+  }
+  function setIai(src){ $('iaiLine').innerHTML=src==='iai'?'<span aria-hidden="true">✓</span> 高科 iAI 辨識關鍵詞與判斷相關':src==='none'?'iAI 未設定（用字詞比對）':src==='error'?'iAI 暫時連不上（改用字詞比對）':''; }
+  $('btnKwReset').onclick=()=>{ kwEdited=false; kwSig=''; autoKw(); renderOut(); toast('已從新聞稿全文重新辨識關鍵詞'); };
   /* 待查連結 */
   function pendingUrls(){
     return items.filter(it=>it.url && !it.excluded && !it.looked && it.media!=='本校官網' && (
@@ -846,11 +907,11 @@ if(typeof document!=='undefined'){
       .sort((a,b)=>(b.pick-a.pick)||(b.score-a.score));
     const when=data.generated_at?new Date(data.generated_at).toLocaleString('zh-TW',{hour12:false}):'';
     const withText=webResults.filter(r=>r.text).length;
-    $('webMeta').innerHTML=`<span>搜尋時間 ${esc(when)}</span><span>找到 <strong>${webResults.length}</strong> 則（讀到內文 ${withText} 則）</span>`+
-      `<span><strong>${webResults.filter(r=>r.pick).length}</strong> 則與新聞稿相關且尚未納入</span>`+(data.query?`<span class="chip c-muted">關鍵詞：${esc(data.query)}</span>`:'')+
+    $('webMeta').innerHTML=`<span>搜尋時間 ${esc(when)}（讀到內文 ${withText} 則）</span>`+
       (data.log&&data.log.length?`<details class="slog"><summary>搜尋紀錄</summary><div>${data.log.map(l=>esc(l)).join('<br>')}</div></details>`:'');
     renderWeb();
   }
+  function updateSiteCount(){ $('siteCount').textContent=searchSites().length; }
   function searchSites(){ return [...new Set(mains.concat(aggs).flatMap(m=>m.domains))].filter(d=>!/nkust\.edu\.tw$|news\.google\.com$/.test(d)); }
   async function runSearch(){
     const ep=endpoint(); if(searching||!ep) return;
@@ -866,6 +927,7 @@ if(typeof document!=='undefined'){
       if(!res.ok) throw new Error('搜尋服務回應 HTTP '+res.status);
       const data=await res.json(); if(!data.ok) throw new Error(data.error||'搜尋服務回報錯誤');
       store.set('mx_web', JSON.stringify(data));
+      if(data.log) setIai(data.log.some(l=>/^iAI 判斷 /.test(l))?'iai':data.log.some(l=>/iAI 未設定/.test(l))?'none':data.log.some(l=>/iAI 判斷失敗/.test(l))?'error':'');
       showWeb(data, true);
     }catch(e){
       const offline=e instanceof TypeError && !location.hostname.endsWith('.github.io');
@@ -879,30 +941,47 @@ if(typeof document!=='undefined'){
     try{ const r=await fetch(ep); const d=await r.json(); toast(d.ok?'搜尋服務連線正常，記得按「儲存設定」':'搜尋服務有回應，但內容不正確'); }
     catch(e){ toast('連不上搜尋服務：請確認網址結尾是 /exec，且部署時「誰可以存取」選了「所有人」'); }
   };
+  function mediaRank(r){ const order=mains.map(m=>m.name); const i=order.indexOf(r.media); return i<0?999:i; }
+  function webRow(r){
+    const nrel=releases().length||bodies().length;
+    const g=Core.grade(r.score,!!nrel,r.basis==='ai'&&r.ai);
+    const judge=r.inItems?'<span class="chip c-ok">已在彙編中</span>':nrel?`<span class="chip ${g.cls}">${r.basis==='ai'?(r.ai.related?'相關':'無關'):g.label}</span>`:'';
+    const d=(r.published||'').slice(5,10).replace('-','/');
+    return `<div class="wrow ${r.platform?'sub':''} ${r.inItems?'in':''}">
+      <input type="checkbox" id="w-${r.idx}" data-w="${r.idx}" ${r.pick?'checked':''} ${r.inItems?'disabled':''} aria-label="勾選 ${esc(r.title)}">
+      <span class="wmed">${esc(r.platform?`${r.media||'?'}/${r.platform}`:(r.media||'未知媒體'))}${r.flag&&!r.inItems?`<small>${esc(r.flag)}</small>`:''}</span>
+      <a class="wttl" href="${esc(r.url)}" target="_blank" rel="noopener" title="${esc(r.title)}">${esc(r.title)}</a>
+      <span class="wdate">${esc(d)}</span><span>${judge}</span></div>`;
+  }
   function renderWeb(){
     const nrel=releases().length||bodies().length;
-    $('webList').innerHTML=webResults.map(r=>{ const g=Core.grade(r.score,!!nrel,r.basis==='ai'&&r.ai);
-      return `<div class="wr ${r.inItems||(!r.pick&&r.score<Core.CUT)?'dim':''}"><input type="checkbox" id="w-${r.idx}" data-w="${r.idx}" ${r.pick?'checked':''} ${r.inItems?'disabled':''} aria-label="加入彙編">
-        <div class="wt"><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a>
-        <div class="wm"><strong>${esc(r.platform?`${r.media||'?'}/${r.platform}`:r.media)}</strong>${r.published?`<span>${esc(r.published.slice(0,16).replace('T',' '))}</span>`:''}
-          ${nrel?`<span class="chip ${g.cls}">${g.label}${r.basis==='ai'?'':` ${Math.round(r.score*100)}%${basisTxt(r)}`}</span>`:''}
-          ${r.inItems?'<span class="chip c-ok">已在彙編中</span>':''}${r.flag&&!r.inItems?`<span class="chip c-warn">${esc(r.flag)}</span>`:''}</div></div></div>`; }).join('');
-    $('btnAddWeb').hidden=!webResults.some(r=>!r.inItems);
+    const isRel=r=>!nrel || r.inItems || r.score>=Core.CUT;
+    const sorter=(a,b)=>mediaRank(a)-mediaRank(b) || (a.media||'').localeCompare(b.media||'') || (!!a.platform)-(!!b.platform) || (b.published||'').localeCompare(a.published||'');
+    const rel=webResults.filter(isRel).sort(sorter), other=webResults.filter(r=>!isRel(r)).sort(sorter);
+    const has=webResults.length>0;
+    $('webTiles').hidden=$('webTable').hidden=$('webBtns').hidden=!has;
+    $('tFound').textContent=webResults.length; $('tRel').textContent=rel.filter(r=>!r.inItems).length; $('tIn').textContent=webResults.filter(r=>r.inItems).length;
+    $('webList').innerHTML=rel.length?rel.map(webRow).join(''):'<div class="empty">沒有判斷相關的報導，可以展開下方「判斷無關」看看，或增加關鍵詞再搜一次。</div>';
+    $('webOtherList').innerHTML=other.map(webRow).join(''); $('otherCount').textContent=other.length; $('webOther').hidden=!other.length;
+    updateAddBtn();
   }
-  $('webList').addEventListener('change',e=>{ const i=e.target.dataset.w; if(i==null) return; const r=webResults.find(x=>x.idx==i); if(r) r.pick=e.target.checked; });
-  $('btnAddWeb').onclick=()=>{ const add=webResults.filter(r=>r.pick && !r.inItems); if(!add.length){ toast('沒有勾選要加入的報導'); return; }
-    for(const r of add){ items.push({id:Math.random().toString(36).slice(2,9), media:r.media, platform:r.platform, title:r.title, text:(r.text||'').slice(0,1500), ai:r.ai||null, url:r.url, host:Core.host(r.url), flag:r.flag||'網路搜尋', rel:null, parent:null, reporter:'', date:(r.published||'').slice(0,10), keep:true}); r.inItems=true; r.pick=false; }
-    refresh(); renderWeb(); toast(`已加入 ${add.length} 則網路搜尋到的報導`); };
+  function updateAddBtn(){ const n=webResults.filter(r=>r.pick&&!r.inItems).length; $('btnAddWeb').textContent=`把勾選的 ${n} 則加入彙編`; }
+  $('webTable').addEventListener('change',e=>{ const i=e.target.dataset.w; if(i==null) return; const r=webResults.find(x=>x.idx==i); if(r) r.pick=e.target.checked; updateAddBtn(); });
+  $('btnPickRel').onclick=()=>{ const nrel=releases().length||bodies().length; webResults.forEach(r=>{ if(!r.inItems) r.pick=!nrel||r.score>=Core.CUT; }); renderWeb(); };
+  $('btnPickNone').onclick=()=>{ webResults.forEach(r=>{ r.pick=false; }); renderWeb(); };
+  $('btnAddWeb').onclick=()=>{ const add=webResults.filter(r=>r.pick && !r.inItems); if(!add.length){ toast('還沒有勾選要加入的報導'); return; }
+    for(const r of add){ items.push({id:Math.random().toString(36).slice(2,9), media:r.media, platform:r.platform, title:r.title, text:(r.text||'').slice(0,1500), ai:r.ai||null, url:r.url, host:Core.host(r.url), flag:r.flag||'', rel:null, parent:null, reporter:'', date:(r.published||'').slice(0,10), keep:true}); r.inItems=true; r.pick=false; }
+    refresh(); renderWeb(); toast(`已加入 ${add.length} 則報導，已依媒體排序併入彙編`); };
 
   let tt; function toast(m){ $('toast').textContent=m; clearTimeout(tt); tt=setTimeout(()=>$('toast').textContent='',3500); }
 
   loadCfg();
   const today=new Date(); $('date').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
   let draft=null; try{ draft=JSON.parse(store.get('mx_draft_v3')||'null'); }catch(e){}
-  if(draft && (draft.items&&draft.items.length || draft.rels&&draft.rels.some(r=>r.title||r.body||r.link))){ rels=draft.rels&&draft.rels.length?draft.rels.map(r=>Object.assign(blankRel(),r)):[blankRel()]; $('kw').value=draft.kw||''; kwEdited=!!draft.kwEdited; $('date').value=draft.date||$('date').value; $('paste').value=draft.paste||''; items=draft.items||[]; }
-  renderRels(); refresh();
+  if(draft && (draft.items&&draft.items.length || draft.rels&&draft.rels.some(r=>r.title||r.body||r.link))){ rels=draft.rels&&draft.rels.length?draft.rels.map(r=>Object.assign(blankRel(),r)):[blankRel()]; $('kw').value=draft.kw||'';  kwEdited=!!draft.kwEdited; $('date').value=draft.date||$('date').value; $('paste').value=draft.paste||''; items=draft.items||[]; }
+  renderRels(); renderKw(); refresh();
   if(store.get('mx_tab')==='sheet') setTab(true);
-  syncEndpointUI();
+  syncEndpointUI(); updateSiteCount();
   try{ const w=JSON.parse(store.get('mx_web')||'null'); if(w) showWeb(w,false); }catch(e){}
 }
 </script>
