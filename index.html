@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>高科大媒體露出彙編</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: work column (titles → LINE paste → detected rows) beside a sticky LINE-bubble preview; stacks under 960px */
+:root{
+  --bg:#eef2f3; --surface:#ffffff; --surface-2:#f6f8f9; --ink:#16232a; --muted:#5a6a72; --line:#d6dfe2;
+  --accent:#0d5b6c; --accent-ink:#ffffff; --accent-soft:#dcecef;
+  --ok:#2c7a4b; --ok-soft:#e1f2e7; --warn:#9a6200; --warn-soft:#fbefd6; --bad:#b03c2c; --bad-soft:#f9e1dc;
+  --bubble:#d7f5c4; --bubble-ink:#14260f;
+  --f-display:"Noto Serif TC","Songti TC",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0f1719; --surface:#172225; --surface-2:#1c292d; --ink:#e3ecee; --muted:#93a5ab; --line:#2b3b40;
+  --accent:#5fb6c6; --accent-ink:#06191d; --accent-soft:#1d3a41;
+  --ok:#7cc99a; --ok-soft:#1b3326; --warn:#e3b35c; --warn-soft:#382c14; --bad:#ec8b7a; --bad-soft:#3d201b;
+  --bubble:#25402a; --bubble-ink:#e4f4dd; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0f1719; --surface:#172225; --surface-2:#1c292d; --ink:#e3ecee; --muted:#93a5ab; --line:#2b3b40;
+  --accent:#5fb6c6; --accent-ink:#06191d; --accent-soft:#1d3a41;
+  --ok:#7cc99a; --ok-soft:#1b3326; --warn:#e3b35c; --warn-soft:#382c14; --bad:#ec8b7a; --bad-soft:#3d201b;
+  --bubble:#25402a; --bubble-ink:#e4f4dd; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;border-bottom:2px solid var(--ink);padding-bottom:10px}
+h1{font-family:var(--f-display);font-size:1.75rem;margin:0;letter-spacing:.04em;text-wrap:balance}
+header p{margin:0;color:var(--muted);font-size:.9rem}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:20px;align-items:start}
+@media (max-width:960px){.grid{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:20px;min-width:0}
+section.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.step{display:flex;align-items:baseline;gap:10px}
+.step b{font-family:var(--f-mono);font-size:.8rem;color:var(--accent);letter-spacing:.08em}
+h2{font-size:1.05rem;margin:0}
+.hint{color:var(--muted);font-size:.85rem;margin:0}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
+textarea,input[type=text],input[type=date]{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%;min-width:0}
+textarea{resize:vertical;line-height:1.55}
+textarea.mono{font-family:var(--f-mono);font-size:.82rem}
+textarea:focus,input:focus,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:12px}
+@media (max-width:560px){.row2{grid-template-columns:minmax(0,1fr)}}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+button{font:inherit;font-size:.9rem;border-radius:4px;padding:7px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:500}
+button:hover{filter:brightness(.96)}
+.stats{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.stats strong{color:var(--ink);font-size:1.1rem;margin-right:2px}
+.items{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
+.item{display:grid;grid-template-columns:150px 130px minmax(0,1fr) auto;gap:6px 10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
+.item.sub{padding-left:22px;background:linear-gradient(90deg,var(--surface-2) 0 14px,transparent 14px)}
+.item input{padding:5px 8px;font-size:.88rem}
+.item .meta{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:.8rem;min-width:0}
+.item .url{font-family:var(--f-mono);font-size:.78rem;color:var(--accent);overflow-wrap:anywhere;min-width:0;flex:1 1 200px}
+.item .del{padding:4px 9px;color:var(--muted)}
+@media (max-width:640px){.item{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}.item .ttl{grid-column:1 / -1;grid-row:2}}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:999px;font-size:.75rem;font-weight:500;white-space:nowrap}
+.c-ok{background:var(--ok-soft);color:var(--ok)} .c-warn{background:var(--warn-soft);color:var(--warn)}
+.c-bad{background:var(--bad-soft);color:var(--bad)} .c-muted{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.c-acc{background:var(--accent-soft);color:var(--accent)}
+select{font:inherit;font-size:.8rem;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:2px 6px;max-width:100%}
+.exbox{border:1px dashed var(--line);border-radius:6px;padding:8px 12px;font-size:.88rem}
+.exbox summary{cursor:pointer;color:var(--bad);font-weight:500}
+.exlist{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.ex{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--line);min-width:0}
+.ex .ex-t{flex:1 1 220px;min-width:0;overflow-wrap:anywhere}
+.ex .url{font-family:var(--f-mono);font-size:.75rem;color:var(--muted);overflow-wrap:anywhere;flex:1 1 100%}
+.ex button{padding:3px 10px;font-size:.8rem}
+.btnlink{display:inline-flex;align-items:center;font-size:.9rem;border-radius:4px;padding:7px 14px;border:1px solid var(--accent);color:var(--accent);text-decoration:none;font-weight:500}
+.btnlink[aria-disabled="true"]{opacity:.45;pointer-events:none}
+button:disabled{opacity:.45;cursor:not-allowed}
+.weblist{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.weblist:empty{border-top:0}
+.wr{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;padding:8px 0;border-bottom:1px solid var(--line);align-items:start}
+.wr .wt{min-width:0;display:flex;flex-direction:column;gap:2px}
+.wr .wt a{color:var(--ink);text-decoration:none;font-weight:500;overflow-wrap:anywhere}
+.wr .wt a:hover{text-decoration:underline}
+.wr .wm{display:flex;flex-wrap:wrap;gap:4px 8px;font-size:.78rem;color:var(--muted);align-items:center;font-variant-numeric:tabular-nums}
+.wr.dim{opacity:.6}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line)}
+.tabs button{border:0;border-bottom:2px solid transparent;border-radius:0;background:none;color:var(--muted);padding:6px 14px}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.pane{display:flex;flex-direction:column;gap:12px}
+.relmeta{display:flex;flex-direction:column;gap:10px}
+.rm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 8px;padding:10px;background:var(--surface-2);border-radius:4px;font-size:.8rem}
+.rm .rmt{grid-column:1 / -1;font-weight:500;color:var(--ink);overflow-wrap:anywhere}
+.rm label{display:flex;flex-direction:column;gap:2px;color:var(--muted);min-width:0}
+.rm label.full{grid-column:1 / -1}
+.rm input{padding:4px 8px;font-size:.82rem}
+.sheetwrap{overflow:auto;max-height:46vh;border:1px solid var(--line);border-radius:4px}
+table.sheet{border-collapse:collapse;font-size:.75rem;white-space:nowrap;font-variant-numeric:tabular-nums}
+table.sheet th,table.sheet td{border:1px solid var(--line);padding:3px 6px;text-align:left;max-width:240px;overflow:hidden;text-overflow:ellipsis}
+table.sheet th{background:var(--surface-2);position:sticky;top:0;color:var(--muted);font-weight:500}
+.item .rep{grid-column:auto}
+.item .meta input{width:96px;padding:2px 6px;font-size:.8rem}
+.empty{padding:22px 4px;color:var(--muted);text-align:center;font-size:.9rem}
+.side{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:960px){.side{position:static}}
+.chat{background:var(--surface-2);border-radius:6px;padding:14px;max-height:68vh;overflow:auto;border:1px solid var(--line)}
+.bubble{background:var(--bubble);color:var(--bubble-ink);border-radius:16px 16px 4px 16px;padding:12px 14px;margin-left:auto;max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere;font-size:.88rem;line-height:1.55}
+.opts{display:flex;flex-direction:column;gap:6px;font-size:.85rem}
+.opts label{display:flex;gap:8px;align-items:center}
+.toast{font-size:.85rem;color:var(--ok);min-height:1.3em}
+details.cfg{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 16px}
+details.cfg summary{cursor:pointer;font-weight:500}
+.cfg-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:16px;margin-top:12px}
+.legend{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.8rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>媒體露出彙編</h1>
+    <p>貼上記者在 LINE 回報的連結，自動辨識媒體、比對標題、依序排好，產出給長官的輿情彙編。</p>
+  </header>
+
+  <div class="grid">
+    <div class="col">
+      <section class="panel" aria-labelledby="h-s1">
+        <div class="step"><b>STEP 1</b><h2 id="h-s1">新聞稿標題與日期</h2></div>
+        <div class="row2">
+          <label class="f">新聞稿標題（一行一則；填了之後，標題與新聞稿無關的連結會自動排除）
+            <textarea id="releases" rows="2"></textarea></label>
+          <label class="f">彙編日期<input type="date" id="date"></label>
+        </div>
+        <label class="f">新聞稿全文（建議貼上：記者大幅改寫標題時，會改用全文比對，也會自動抓出搜尋關鍵詞。多則新聞稿依標題順序貼，中間用一行 === 分隔）
+          <textarea id="bodies" rows="5" placeholder="從官網新聞或新聞稿 Word 檔複製全文貼上"></textarea></label>
+      </section>
+
+      <section class="panel" aria-labelledby="h-s2">
+        <div class="step"><b>STEP 2</b><h2 id="h-s2">貼上 LINE 回報內容</h2></div>
+        <p class="hint">直接從 LINE 群組複製整段訊息貼上即可，時間、記者名稱、雜訊都沒關係。也可以貼上舊的彙編格式（【波新聞/蕃新聞】這類標籤會被讀取）。</p>
+        <textarea id="paste" rows="10" placeholder="例：10:12 自由時報記者 高科大學生勇奪RoboRAVE世界機器人賽季軍 https://news.ltn.com.tw/..."></textarea>
+        <div class="btns">
+          <button class="primary" id="btnParse">辨識連結</button>
+          <button id="btnAppend">追加辨識（保留已整理的）</button>
+          <button id="btnSample">載入範例</button>
+          <button id="btnClear">清空</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-web" id="webPanel">
+        <div class="step"><b>STEP 2+</b><h2 id="h-web">網路搜尋媒體露出</h2></div>
+        <p class="hint" id="webHint"></p>
+        <label class="f">搜尋關鍵詞（新聞稿標題會自動加入；人名、比賽名從全文自動抓取，可自行修改，用 | 分隔）
+          <input type="text" id="kw" placeholder="例：孫傳恩 | RoboRAVE世界機器人冠軍賽"></label>
+        <div class="opts">
+          <label><input type="checkbox" id="optLookup" checked> 一併查詢 <strong id="pendCount">0</strong> 則待查連結的標題與內文（沒標題、短網址、或標題差異大的）</label>
+          <label>搜尋範圍
+            <select id="days"><option value="3">最近 3 天</option><option value="7">最近 7 天</option><option value="14">最近 14 天</option><option value="30">最近 30 天</option></select></label>
+        </div>
+        <div class="btns">
+          <button class="primary" id="btnSearch">搜尋網路露出</button>
+          <button id="btnKwReset">重新抓取關鍵詞</button>
+        </div>
+        <div class="stats" id="webMeta"></div>
+        <div class="weblist" id="webList"></div>
+        <div class="btns"><button class="primary" id="btnAddWeb" hidden>把勾選的加入彙編</button></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-s3">
+        <div class="step"><b>STEP 3</b><h2 id="h-s3">確認辨識結果</h2></div>
+        <div class="stats" id="stats"></div>
+        <div class="legend">標題比對：
+          <span class="chip c-ok">原標題</span><span class="chip c-acc">改寫</span>
+          <span class="chip c-warn">大幅改寫</span><span class="chip c-bad">與本則無關（自動排除）</span>
+          <span class="chip c-muted">無標題</span>
+          ・縮排列為轉載平台，會排在主媒體下方
+        </div>
+        <div class="items" id="items"></div>
+        <details class="exbox" id="exBox" hidden><summary>已排除 <span id="exCount">0</span> 則（不會出現在彙編，按「納入彙編」可復原）</summary>
+          <div id="exItems" class="exlist"></div></details>
+        <div class="btns"><button id="btnAdd">＋ 手動新增一列</button></div>
+      </section>
+
+      <details class="cfg">
+        <summary>媒體排序與網域設定</summary>
+        <p class="hint" style="margin-top:8px">每行一家：<code>名稱 | 網域, 網域 | 關鍵字, 關鍵字 | 無網址</code>（網域可帶路徑，例如 homeplus.net.tw/so/gd）（第四欄只有廣播等沒有連結的媒體才填）。主媒體的上下順序就是彙編的排序；清單外的媒體一律排在最後。設定只存在這台電腦的瀏覽器。</p>
+        <div class="cfg-body">
+          <label class="f">主媒體（依排序）<textarea id="cfgMain" class="mono" rows="16"></textarea></label>
+          <label class="f">轉載平台<textarea id="cfgAgg" class="mono" rows="16"></textarea></label>
+        </div>
+        <label class="f" style="margin-top:12px">搜尋服務網址（Google Apps Script 部署後的網址，結尾是 /exec）
+          <input type="text" id="cfgEndpoint" placeholder="https://script.google.com/macros/s/……/exec"></label>
+        <div class="btns" style="margin-top:12px">
+          <button id="btnTestEp">測試搜尋服務</button>
+          <button class="primary" id="btnCfgSave">儲存設定並重新排序</button>
+          <button id="btnCfgReset">恢復預設</button>
+        </div>
+      </details>
+    </div>
+
+    <aside class="col side">
+      <section class="panel" aria-labelledby="h-out">
+        <div class="step"><b>OUTPUT</b><h2 id="h-out">產出</h2></div>
+        <div class="tabs" role="tablist">
+          <button role="tab" id="tabLine" aria-selected="true">LINE 貼文</button>
+          <button role="tab" id="tabSheet" aria-selected="false">Google 試算表</button>
+        </div>
+        <div id="paneLine" class="pane">
+          <div class="chat"><div class="bubble" id="out"></div></div>
+          <div class="btns"><button class="primary" id="btnCopy">複製貼文</button></div>
+          <div class="opts">
+            <label><input type="checkbox" id="optCount"> 開頭加上「共 N 家媒體、M 則露出」</label>
+          </div>
+        </div>
+        <div id="paneSheet" class="pane" hidden>
+          <div id="relMeta" class="relmeta"></div>
+          <div class="sheetwrap"><table class="sheet" id="sheet"></table></div>
+          <div class="btns"><button class="primary" id="btnCopySheet">複製表格內容</button></div>
+          <div class="opts">
+            <label><input type="checkbox" id="optHeader"> 包含表頭列</label>
+            <label><input type="checkbox" id="optSheetSelf"> 包含本校官網那一列</label>
+          </div>
+          <p class="hint">在 Google 試算表點選「露出媒體」要開始的第一格（通常是「校內發稿日期」欄），直接貼上即可，會自動分欄。</p>
+        </div>
+        <div class="toast" id="toast" role="status"></div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+/* ---------- pure logic (no DOM) ---------- */
+const DEFAULT_MAIN = `本校官網 | nkust.edu.tw | 本校官網
+中央社 | cna.com.tw | 中央社
+台視 | ttv.com.tw | 台視
+中視 | ctv.com.tw | 中視
+華視 | cts.com.tw | 華視
+民視 | ftvnews.com.tw | 民視
+公共電視及台語台 | pts.org.tw | 公視, 公共電視, 台語台
+客家電視台 | hakkatv.org.tw | 客家電視, 客台
+TVBS | tvbs.com.tw | TVBS
+東森 | ebc.net.tw | 東森新聞, 東森電視
+中天新聞 | ctinews.com, ctitv.com.tw | 中天
+三立 | setn.com | 三立
+年代 | eracom.com.tw, eranews.com.tw | 年代新聞
+壹電視 | nexttv.com.tw | 壹電視
+原住民族電視台 | titv.ipcf.org.tw | 原民台, 原住民族電視
+港都新聞 | homeplus.net.tw/so/gd | 港都新聞, 港都有線, 港都電視
+鳳信新聞 | phoenixcatv.com.tw | 鳳信
+南國新聞 | nkcatv.com.tw | 南國新聞, 南國有線
+新高雄新聞 | nkh.com.tw | 新高雄新聞, 新高雄有線
+自由時報 | ltn.com.tw | 自由時報
+中國時報 | chinatimes.com | 中國時報, 中時
+聯合報 | udn.com | 聯合報, 聯合新聞網
+臺灣時報 | twtimes.com.tw | 臺灣時報, 台灣時報
+民眾日報 | mypeople.tw | 民眾日報
+工商時報 | ctee.com.tw | 工商時報
+經濟日報 | money.udn.com | 經濟日報
+中華日報 | cdns.com.tw | 中華日報, 中華新聞雲
+人間通訊社 | merit-times.com, lnanews.com | 人間通訊社, 人間福報
+台灣新生報 | tssdnews.com.tw | 台灣新生報, 新生報
+鮮週報 | freshweekly.tw | 鮮週報
+奇摩雅虎 | yahoo.com | 奇摩, Yahoo
+NOWnews今日新聞 | nownews.com | NOWnews, 今日新聞
+風傳媒 | storm.mg | 風傳媒
+ETtoday新聞雲 | ettoday.net | ETtoday
+品觀點 | pinview.com.tw | 品觀點
+太報 | taisounds.com | 太報
+上報 | upmedia.mg | 上報UP, upmedia
+波新聞 | bo6s.com.tw | 波新聞
+漾新聞 | youngnews3631.com | 漾新聞
+寫新聞 | enews-life.com.tw | 寫新聞
+今傳媒 | focusnews.com.tw | 今傳媒
+台新傳媒 | seenews.tw | 台新傳媒
+飛揚新聞 | fion.ikh.tw | 飛揚新聞`;
+const DEFAULT_AGG = `蕃新聞 | n.yam.com | 蕃新聞
+OwlNews | news.owlting.com | OwlNews, Owlnews, owlting
+瑩響力 | yingfluence99.com | 瑩響力
+Enn台灣電報 | enn.tw | Enn台灣電報, 台灣電報
+全國大小事新聞網 | nchn.news | 全國大小事
+大時事 | bigtimes.net | 大時事
+商訊快報 | businessalert.today | 商訊快報
+天天上新聞 | mknews.com.tw | 天天上新聞, 天天上
+PChome | news.pchome.com.tw | PChome
+行銷人 | marketersgo.com | 行銷人
+LINE TODAY | today.line.me | LINE TODAY
+MSN | msn.com | MSN
+Google新聞 | news.google.com | Google新聞`;
+
+const Core = {
+  parseCfg(text){
+    return text.split(/\n/).map(l=>l.trim()).filter(l=>l && !l.startsWith('#')).map(l=>{
+      const [name,dom='',kw='',flags=''] = l.split('|').map(s=>s.trim());
+      const split = s => s.split(/[,，、]/).map(x=>x.trim()).filter(Boolean);
+      const kws = split(kw); if(!kws.includes(name)) kws.unshift(name);
+      return {name, domains:split(dom).map(d=>d.toLowerCase()), keywords:kws, nourl:/無網址/.test(flags)};
+    }).filter(m=>m.name);
+  },
+  host(url){ try{ return new URL(url).hostname.toLowerCase().replace(/^www\./,''); }catch(e){ return ''; } },
+  byDomain(list,host,url){
+    let best=null, len=0, hp='';
+    try{ const U=new URL(url); hp=(U.hostname.replace(/^www\./,'')+U.pathname).toLowerCase(); }catch(e){}
+    for(const m of list) for(const d of m.domains){
+      const hit=d.includes('/') ? (hp && hp.startsWith(d)) : (host===d || host.endsWith('.'+d));
+      if(hit && d.length>len){ best=m; len=d.length; }
+    }
+    return best;
+  },
+  byKeyword(list,text){
+    if(!text) return null;
+    let best=null, len=0;
+    for(const m of list) for(const k of m.keywords){
+      if(k.length>=2 && text.toLowerCase().includes(k.toLowerCase()) && k.length>len){ best=m; len=k.length; }
+    }
+    return best;
+  },
+  STOP:['國立高雄科技大學','高雄科技大學','科技大學','高科大','nkust','本校','學生','學子','同學'],
+  NON_NEWS:['drive.google.com','docs.google.com','forms.gle','meet.google.com','line.me','lin.ee','zoom.us','maps.app.goo.gl','goo.gl/maps','dropbox.com','facebook.com','fb.me','instagram.com'],
+  isNonNews(host,url){ if(host==='today.line.me') return false; return Core.NON_NEWS.some(d=>host===d||host.endsWith('.'+d)||url.includes(d+'/')); },
+  norm(s){ let t=(s||'').toLowerCase(); for(const w of Core.STOP) t=t.split(w).join(' '); return t.replace(/[^\p{L}\p{N}]/gu,''); },
+  grams(s){ const n=Core.norm(s), g=new Set(); for(let i=0;i<n.length-1;i++) g.add(n.slice(i,i+2)); if(n.length===1) g.add(n); return g; },
+  similarity(a,b){
+    const A=Core.grams(a), B=Core.grams(b); if(!A.size||!B.size) return 0;
+    let inter=0; for(const g of A) if(B.has(g)) inter++;
+    const dice=2*inter/(A.size+B.size), overlap=inter/Math.min(A.size,B.size);
+    return Math.min(1, 0.5*dice+0.5*overlap);
+  },
+  CUT:0.15,
+  grade(score,hasTitle){
+    if(!hasTitle) return {cls:'c-muted',label:'無標題'};
+    if(score>=0.85) return {cls:'c-ok',label:'原標題'};
+    if(score>=0.3) return {cls:'c-acc',label:'改寫'};
+    if(score>=Core.CUT) return {cls:'c-warn',label:'大幅改寫'};
+    return {cls:'c-bad',label:'與本則無關'};
+  },
+  cleanText(s){
+    return s.replace(/^\s*\d{1,2}:\d{2}(\s*(上午|下午|AM|PM))?\s*/i,'')
+            .replace(/^.*\t/,'')            // LINE 匯出：時間\t名稱\t訊息
+            .replace(/【[^】]*】/g,'')
+            .replace(/[\s:：\-–—|]+$/,'').replace(/^[\s:：\-–—|]+/,'').trim();
+  },
+  stripSpeaker(t, mains, aggs){
+    // 去掉開頭的「自由時報記者」「今傳媒 王記者」這類發話者字樣
+    for(let n=0;n<2;n++){
+      const m=t.match(/^(\S{1,14})[\s　]+(.+)$/); if(!m) break;
+      const tok=m[1];
+      const isSpeaker=/(記者|特派|小編|上架|回報|報導|連結|新聞稿)$/.test(tok) || Core.byKeyword(mains,tok) || Core.byKeyword(aggs,tok);
+      if(isSpeaker && m[2].length>=6) t=m[2].trim(); else break;
+      if(/記者$/.test(tok)){ const nm=t.match(/^([\u4e00-\u9fa5]{2,3})[\s　]+(.{6,})$/); if(nm) t=nm[2].trim(); break; }
+    }
+    return t.trim();
+  },
+  isTitleLike(s){ return s.length>=6 && /\p{Script=Han}/u.test(s) && !/^(各位|檢陳|謝謝|感謝|收到|麻煩|您好|老師好)/.test(s); },
+  /* returns {items, releases:[], date} */
+  parse(text, mains, aggs){
+    const URL_RE=/https?:\/\/[^\s<>"'「」，。、）)\]]+/g;
+    const items=[], foundReleases=[]; let date=null;
+    let currentMain=null, pending='', label=null; const seen=new Set(), lastMain={}; let skipped=0, pendingLine='';
+    const newId=()=>Math.random().toString(36).slice(2,9);
+    const lines=text.split(/\r?\n/);
+    for(const raw of lines){
+      const line=raw.trim(); if(!line) continue;
+      const dm=line.match(/檢陳\s*(\d{4})[.\/-](\d{1,2})[.\/-](\d{1,2})/);
+      if(dm){ date=`${dm[1]}-${dm[2].padStart(2,'0')}-${dm[3].padStart(2,'0')}`; continue; }
+      if(/^\d{4}[.\/-]\d{1,2}[.\/-]\d{1,2}/.test(line) && !URL_RE.test(line)){ URL_RE.lastIndex=0; continue; }
+      URL_RE.lastIndex=0;
+      const rel=line.match(/^新聞稿\s*[-－:：]\s*(.+)$/);
+      if(rel){ foundReleases.push(rel[1].trim()); continue; }
+      const lab=line.match(/【([^】]+)】/);
+      if(lab){
+        const parts=lab[1].split('/').map(s=>s.trim()).filter(Boolean);
+        const m=Core.byKeyword(mains,parts[0]);
+        label={media:m?m.name:parts[0], platform:parts[1]||''};
+        if(!parts[1]) currentMain=label.media;
+      }
+      const urls=line.match(URL_RE)||[];
+      const textPart=Core.cleanText(line.replace(URL_RE,' '));
+      if(!urls.length){
+        const km=Core.byKeyword(mains,line);
+        if(km && km.nourl){
+          // 廣播等無網址媒體：有提到就算一則露出
+          let t=Core.stripSpeaker(textPart, mains, aggs);
+          for(const k of km.keywords) if(t.startsWith(k)) t=t.slice(k.length).trim();
+          if(!Core.isTitleLike(t) || /播出|露出|播報|專訪|採訪|上節目/.test(t)) t='';
+          const key='nourl:'+km.name+':'+t;
+          if(!seen.has(key)){ seen.add(key);
+            const id=newId(); lastMain[km.name]=id;
+            items.push({id, media:km.name, platform:'', title:t, url:'', host:'', flag:'', rel:null}); }
+          continue;
+        }
+        if(km && !lab) currentMain=km.name;
+        if(Core.isTitleLike(textPart)){ pending=textPart; pendingLine=line; }
+        continue;
+      }
+      urls.forEach((u,i)=>{
+        u=u.replace(/[.,;!?]+$/,'');
+        if(seen.has(u)) return; seen.add(u);
+        const host=Core.host(u);
+        if(Core.isNonNews(host,u)){ skipped++; return; }
+        let media='', platform='', flag='';
+        const dMain=Core.byDomain(mains,host,u), dAgg=Core.byDomain(aggs,host,u);
+        const kMain=Core.byKeyword(mains,line.replace(URL_RE,' ')), kAgg=Core.byKeyword(aggs,line.replace(URL_RE,' '));
+        if(dMain){ media=dMain.name; currentMain=media; }
+        else if(dAgg){ platform=dAgg.name; media=(label&&label.media)||(kMain&&kMain.name)||currentMain||''; if(!media) flag='請填主媒體'; }
+        else if(label){ media=label.media; platform=label.platform; }
+        else {
+          if(kAgg){ platform=kAgg.name; media=(kMain&&kMain.name)||currentMain||''; }
+          else if(kMain){ media=kMain.name; currentMain=media; }
+          else { media=currentMain||''; flag='短網址/未知網域，請確認'; }
+          if(!media) flag='請填主媒體';
+        }
+        let title='';
+        if(i===0 && Core.isTitleLike(textPart)) title=textPart;
+        else if(i===0 && pending) title=pending;
+        if(title){ pending=''; }
+        title=Core.stripSpeaker(title, mains, aggs);
+        const rm=i===0 && ((Core.isTitleLike(textPart)?line:pendingLine)||'').match(/記者(?!會)[\s　]*([\u4e00-\u9fa5]{2,3})(?=[\s　]|$)/);
+        const reporter=rm&&!Core.byKeyword(mains,rm[1])?rm[1]:'';
+        if(i===0) pendingLine='';
+        if(media==='本校官網' && !platform) title='';   // 官網用新聞稿原標題
+        const id=newId(), parent=platform?(lastMain[media]||null):null;
+        if(!platform && media) lastMain[media]=id;
+        items.push({id, media, platform, title, url:u, host, flag, rel:null, parent, reporter});
+      });
+      label=null;
+    }
+    // 轉載平台的標題不需要；若主媒體缺標題而轉載有，補給主媒體
+    return {items, releases:foundReleases, date, skipped};
+  },
+  assign(items, releases, bodies){
+    bodies=bodies||[];
+    const n=Math.max(releases.length,bodies.length,1);
+    for(const it of items){
+      const has=!!(it.title||it.text);
+      const sc=i=>Core.relScore(it.title,it.text,releases[i]||'',bodies[i]||'');
+      if(n<=1 || it.relLocked){ const i=n<=1?0:(it.rel||0); const r=has?sc(i):{score:0,basis:'title'}; it.rel=i; it.score=r.score; it.basis=r.basis; continue; }
+      let bi=0,br={score:-1,basis:'title'}; for(let i=0;i<n;i++){ const r=has?sc(i):{score:0,basis:'title'}; if(r.score>br.score){br=r;bi=i;} }
+      it.rel=bi; it.score=Math.max(0,br.score); it.basis=br.basis;
+    }
+    // 無標題的列跟著同媒體的主列走
+    if(n>1) for(const it of items){
+      if(!it.title && !it.text && !it.relLocked){ const p=items.find(x=>x.media===it.media && x.title && !x.platform); if(p) it.rel=p.rel; }
+    }
+  },
+  /* ---- 全文比對 ---- */
+  _gcache:new Map(),
+  ngrams(s,n){ const t=Core.norm(s), g=new Set(); for(let i=0;i+n<=t.length;i++) g.add(t.slice(i,i+n)); return g; },
+  bodyGrams(body,n){ const k=n+'|'+body; if(!Core._gcache.has(k)){ if(Core._gcache.size>20) Core._gcache.clear(); Core._gcache.set(k,Core.ngrams(body,n)); } return Core._gcache.get(k); },
+  contain(text, body, n){ if(!text||!body) return 0; const A=Core.ngrams(text,n); if(A.size<4) return 0; const B=Core.bodyGrams(body,n); let k=0; for(const g of A) if(B.has(g)) k++; return k/A.size; },
+  /* 回傳 {score, basis}：basis = title 標題 / body 標題對全文 / content 報導內文對全文 */
+  relScore(title, text, relTitle, body){
+    let best={score:0,basis:'title'};
+    const put=(v,b)=>{ if(v>best.score) best={score:v,basis:b}; };
+    if(title && relTitle) put(Core.similarity(title,relTitle),'title');
+    if(title && body) put(Math.min(1,0.9*Core.contain(title,body,2)),'body');
+    if(text && body) put(Math.min(1,1.6*Core.contain(text.slice(0,1500),body,3)),'content');
+    return best;
+  },
+  SURNAMES:'陳林黃張李王吳劉蔡楊許鄭謝洪郭邱曾廖賴徐周葉蘇莊呂江何蕭羅高潘簡朱鍾游彭詹胡施沈余盧梁趙顏柯翁魏孫戴范方宋鄧杜傅侯曹薛丁卓阮馬董温唐藍石蔣古紀姚連馮歐程湯黃田康姜白汪鄒尤巫鐘黎涂龔嚴韓袁金童陸夏柳凃邵錢伍倪溫于譚駱熊任甘秦顧毛章史官萬俞雷粘饒張闕凌崔尹孔辛武辜陶段龍韋葛池孟褚殷麥賀賈莫文管關向包丘梅華利裴樊房全佘左花',
+  keywords(relTitles, bodies){
+    const out=[], add=w=>{ w=(w||'').trim(); if(w.length<2||w.length>30) return; if(out.some(x=>x===w||x.includes(w))) return; for(let i=out.length-1;i>=0;i--) if(w.includes(out[i])) out.splice(i,1); out.push(w); };
+    const txt=bodies.join('\n');
+    (txt.match(/[「『“]([^」』”]{3,24})[」』”]/g)||[]).forEach(q=>{ const w=q.slice(1,-1); if(/\p{Script=Han}|[A-Za-z]{3}/u.test(w) && !/[，。！？]/.test(w)) add(w); });
+    (txt.match(/[A-Za-z][A-Za-z0-9&\-]{3,}/g)||[]).forEach(w=>{ if(!/^(NKUST|Open|https?|www|com|The|and|for|with)$/i.test(w)) add(w); });
+    const cnt=new Map();
+    const re=/(?:學生|同學|教授|老師|校長|主任|院長|副校長|執行長|經理|董事長|總經理|選手|博士生|碩士生|研究生|校友|局長|市長|議員|部長)([\u4e00-\u9fa5]{2,3})(?=[，、。及與和的表指說也更則今昨於在等率])/g;
+    let m; while((m=re.exec(txt))){ const n=m[1]; if(Core.SURNAMES.includes(n[0])) cnt.set(n,(cnt.get(n)||0)+2); }
+    const re2=/([\u4e00-\u9fa5]{2,3})(?:表示|指出|強調|分享|說明|坦言|笑說)/g;
+    while((m=re2.exec(txt))){ const n=m[1]; if(Core.SURNAMES.includes(n[0]) && !/^(本校|校方|學校|團隊|系上|該校|他們|大家|同學|老師)$/.test(n)) cnt.set(n,(cnt.get(n)||0)+1); }
+    [...cnt.entries()].sort((a,b)=>b[1]-a[1]).slice(0,4).forEach(([n])=>add(n));
+    return out.filter(w=>!relTitles.includes(w)).slice(0,6);
+  },
+  cleanPageTitle(t){
+    t=(t||'').replace(/\s+/g,' ').trim(); if(!t) return '';
+    const parts=t.split(/\s+[-|｜–—]\s+|\s*[|｜]\s*/).map(x=>x.trim()).filter(Boolean);
+    return parts.sort((a,b)=>b.length-a.length)[0]||t;
+  },
+  /* 自動排除：主報導標題與新聞稿無關 → 排除；其轉載跟著排除。手動 keep 優先 */
+  applyExclusion(items, hasRelease){
+    const byId=new Map(items.map(i=>[i.id,i]));
+    for(const it of items){ if(it.platform) continue;
+      it.auto = hasRelease && !!(it.title||it.text) && it.score<Core.CUT;
+      it.excluded = it.keep===true?false : it.keep===false?true : it.auto; }
+    for(const it of items){ if(!it.platform) continue;
+      const p=it.parent&&byId.get(it.parent);
+      it.auto = !!(p && p.excluded);
+      it.excluded = it.keep===true?false : it.keep===false?true : it.auto; }
+  },
+  ordered(items, releases, mains){
+    const order=mains.map(m=>m.name), rank=n=>{const i=order.indexOf(n);return i<0?999:i;};
+    return items.filter(it=>(it.url||it.media) && !it.excluded).map((it,i)=>({it,i}))
+      .sort((a,b)=>(a.it.rel||0)-(b.it.rel||0) || rank(a.it.media||'未分類')-rank(b.it.media||'未分類') || (a.it.media||'').localeCompare(b.it.media||'') || (!!a.it.platform)-(!!b.it.platform) || a.i-b.i).map(x=>x.it);
+  },
+  fmtDate(d){ return (d||'').slice(0,10).replace(/-/g,'/'); },
+  SHEET_HEAD:['校內發稿日期','校內發稿 (連結)','編號','露出媒體','記者姓名','露出日期','露出標題','露出新聞連結'],
+  sheetRows({items, releases, relMeta, date, mains, includeSelf}){
+    const rels=releases.length?releases:[''];
+    const list=Core.ordered(items, rels, mains), rows=[];
+    for(const it of list){
+      const ri=it.rel||0, meta=relMeta[ri]||{}, rTitle=rels[ri]||'';
+      const self=list.find(x=>(x.rel||0)===ri && x.media==='本校官網' && !x.platform && x.url);
+      if(it.media==='本校官網' && !it.platform && !includeSelf) continue;
+      const parent=it.platform && (list.find(x=>x.id===it.parent) || list.find(x=>x.media===it.media && !x.platform && x.title && (x.rel||0)===ri));
+      const title=it.title || (parent&&parent.title) || (it.media==='本校官網'||!it.url?rTitle:'');
+      rows.push([Core.fmtDate(meta.date||date), meta.link||(self?self.url:''), meta.no||'',
+        it.platform?`${it.media}/${it.platform}`:(it.media||''), it.reporter||'', Core.fmtDate(it.date||date), title, it.url||'']);
+    }
+    return rows;
+  },
+  toTSV(rows){ return rows.map(r=>r.map(c=>{ c=String(c??''); return /[\t\n"]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join('\t')).join('\n'); },
+  mapSource(r, mains, aggs){
+    const h1=Core.host(r.url||''), h2=Core.host(r.source_url||'');
+    const dMain=Core.byDomain(mains,h1,r.url)||Core.byDomain(mains,h2,r.source_url);
+    if(dMain) return {media:dMain.name, platform:''};
+    const kMain=Core.byKeyword(mains,r.source||'');
+    if(kMain) return {media:kMain.name, platform:''};
+    const dAgg=Core.byDomain(aggs,h1,r.url)||Core.byDomain(aggs,h2,r.source_url)||Core.byKeyword(aggs,r.source||'');
+    if(dAgg) return {media:'', platform:dAgg.name, flag:'請填主媒體'};
+    return {media:r.source||h2||h1||'', platform:'', flag:'不在排序表'};
+  },
+  build({items, releases, date, mains, optCount, optInline}){
+    const order=mains.map(m=>m.name);
+    const rank=n=>{ const i=order.indexOf(n); return i<0?999:i; };
+    const d=(date||'').replace(/-/g,'.');
+    const out=['各位師長好：',`檢陳${d}高科大新聞輿情彙編`];
+    const valid=items.filter(it=>(it.url||it.media) && !it.excluded);
+    if(optCount){
+      const media=new Set(valid.map(i=>i.media||'未分類'));
+      out.push(`（共 ${media.size} 家媒體、${valid.length} 則露出）`);
+    }
+    const rels=releases.length?releases:[''];
+    rels.forEach((rTitle,ri)=>{
+      const its=valid.filter(it=>(it.rel||0)===ri);
+      if(!its.length && rels.length>1) return;
+      out.push('');
+      if(rTitle) out.push(`新聞稿-${rTitle}`, '');
+      const groups=new Map();
+      for(const it of its){ const k=it.media||'未分類'; if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(it); }
+      const keys=[...groups.keys()].sort((a,b)=>rank(a)-rank(b));
+      const blocks=keys.map(k=>{
+        const g=groups.get(k), mainsOf=g.filter(x=>!x.platform), subs=g.filter(x=>x.platform);
+        const lines=[];
+        for(const m of mainsOf){
+          const t=m.title || (k==='本校官網'?rTitle:'');
+          lines.push(`【${k}】`);
+          if(t && optInline && k==='本校官網') lines.push(t+m.url);
+          else if(!m.url) lines.push(t||rTitle);
+          else { if(t) lines.push(t); lines.push(m.url); }
+        }
+        for(const s of subs){ lines.push(`【${k}/${s.platform}】`); if(s.url) lines.push(s.url); }
+        return lines.join('\n');
+      });
+      out.push(blocks.join('\n\n'));
+    });
+    return out.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+  }
+};
+
+const SAMPLE_BODY=`高科大學子國際競賽舞台爭光，海事學院孫傳恩奪國際機器人賽季軍
+（範例全文）國立高雄科技大學海事學院輪機工程系專科部二年級學生孫傳恩，日前前往日本大阪參加「2026 RoboRAVE世界機器人冠軍賽」，在循線Open組與來自多國的選手同場競技，憑藉穩定的程式控制與機構設計，最終拿下季軍，為校爭光。
+孫傳恩表示，比賽場地與練習環境不同，現場必須快速調整感測器參數，能在國際舞台上獲獎，感謝系上師長的指導與學校的支持。海事學院也表示，學院持續鼓勵學生參與國際競賽，培養跨領域的工程實作能力。`;
+const SAMPLE_RELEASE='高科大學子國際競賽舞台爭光，海事學院孫傳恩奪國際機器人賽季軍';
+const SAMPLE_PASTE=`2026.11.05 星期四
+09:40 公關中心 官網已上架 https://www.nkust.edu.tw/p/406-1000-109486,r1363.php?Lang=zh-tw
+10:12 自由時報記者 高科大學生勇奪RoboRAVE世界機器人賽季軍
+https://news.ltn.com.tw/news/life/breakingnews/5630413
+10:30 鮮週報 日本大阪2026世界機器人冠軍賽 高科大輪機系專二生孫傳恩拿下循線Open季軍 https://freshweekly.tw/?pn=vw&id=36z9701b1ky5#vw
+11:02 波新聞 高科大學子國際競賽舞台爭光 海事學院孫傳恩奪國際機器人賽季軍
+https://www.bo6s.com.tw/news_detail.php?NewsID=118428
+https://n.yam.com/Article/20261105415079
+https://news.owlting.com/articles/1483510
+https://yingfluence99.com/rssnews_detail.php?NewsID=118428
+https://enn.tw/803131/
+11:18 鮮週報 順便分享昨天的稿子 高雄港區觀光季開跑 市府推出夜間遊港行程
+https://freshweekly.tw/?pn=vw&id=88abc123
+https://n.yam.com/Article/20261104000001
+11:19 會議資料在這 https://drive.google.com/file/d/abc123/view
+11:20 漾新聞 高科大孫傳恩世界機器人賽奪季軍　揚名國際 https://reurl.cc/DYV79d
+全國大小事 https://nchn.news/archives/168749
+https://bigtimes.net/archives/136791
+https://businessalert.today/archives/130460
+13:05 寫新聞 高科大學子國際競賽舞台爭光，海事學院孫傳恩奪國際機器人賽季軍 https://enews-life.com.tw/2026/11/646779/
+https://news.owlting.com/articles/1483554
+14:10 今傳媒 高科大學子國際競賽爭光，海事學院孫傳恩奪國際機器人賽季軍
+https://focusnews.com.tw/2026/11/729745/
+PChome https://reurl.cc/gNq1YX
+https://n.yam.com/Article/20261105196701
+https://mknews.com.tw/2026/11/1013559/
+行銷人 https://reurl.cc/dOMAag
+15:30 台新傳媒 高科大孫傳恩世界機器人賽奪季軍　工程實力揚名國際 https://seenews.tw/109905
+16:02 飛揚新聞 高科大學子國際競賽舞台爭光，海事學院孫傳恩奪國際機器人賽季軍 https://fion.ikh.tw/?pn=vw&id=021s6377972q`;
+
+/* ---------- UI ---------- */
+if(typeof document!=='undefined'){
+  const $=id=>document.getElementById(id);
+  const store={ get(k){ try{return localStorage.getItem(k);}catch(e){return null;} }, set(k,v){ try{localStorage.setItem(k,v);}catch(e){} } };
+  let mains, aggs, items=[], lastSkipped=0;
+
+  function loadCfg(){
+    $('cfgMain').value=store.get('mx_main_v7')||DEFAULT_MAIN;
+    $('cfgAgg').value=store.get('mx_agg_v7')||DEFAULT_AGG;
+    mains=Core.parseCfg($('cfgMain').value); aggs=Core.parseCfg($('cfgAgg').value);
+    let dl=$('dlMain'); if(!dl){ dl=document.createElement('datalist'); dl.id='dlMain'; document.body.appendChild(dl); }
+    dl.innerHTML=mains.map(m=>`<option value="${esc(m.name)}">`).join('');
+    let da=$('dlAgg'); if(!da){ da=document.createElement('datalist'); da.id='dlAgg'; document.body.appendChild(da); }
+    da.innerHTML=aggs.map(m=>`<option value="${esc(m.name)}">`).join('');
+  }
+  function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function bodies(){ const t=$('bodies').value.trim(); return t?t.split(/\n\s*={3,}\s*\n/).map(x=>x.trim()).filter(Boolean):[]; }
+  function basisTxt(it){ return it.basis==='body'?'・比對全文':it.basis==='content'?'・比對內文':''; }
+  function releases(){ return $('releases').value.split(/\n/).map(s=>s.replace(/^新聞稿\s*[-－:：]\s*/,'').trim()).filter(Boolean); }
+
+  function sortItems(){
+    const order=mains.map(m=>m.name), rank=n=>{const i=order.indexOf(n);return i<0?999:i;};
+    items.forEach((it,i)=>it._i=i);
+    items.sort((a,b)=>(a.rel||0)-(b.rel||0) || rank(a.media)-rank(b.media) || (a.media||'').localeCompare(b.media||'') || (!!a.platform)-(!!b.platform) || a._i-b._i);
+  }
+
+  function renderItems(){
+    const rels=releases();
+    Core.assign(items, rels, bodies()); Core.applyExclusion(items, rels.length>0||bodies().length>0); sortItems();
+    const box=$('items');
+    const shown=items.filter(i=>!i.excluded), hidden=items.filter(i=>i.excluded);
+    $('exBox').hidden=!hidden.length; $('exCount').textContent=hidden.length;
+    $('exItems').innerHTML=hidden.map(it=>`<div class="ex" data-id="${it.id}">
+        <span class="chip c-bad">${it.platform?'跟著主報導排除':(it.keep===false?'手動排除':'與本則無關')}</span>
+        <span class="ex-t">${esc(it.platform?`${it.media}/${it.platform}`:`${it.media}｜${it.title||'(無標題)'}`)}</span>
+        <a class="url" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.url)}</a>
+        <button data-keep="${it.id}">納入彙編</button></div>`).join('');
+    if(!shown.length){ box.innerHTML='<div class="empty">還沒有連結。貼上 LINE 回報後按「辨識連結」，或先按「載入範例」看看效果。</div>'; renderStats(); return; }
+    box.innerHTML=shown.map(it=>{
+      const g=Core.grade(it.score, !!(it.title||it.text));
+      const relSel=rels.length>1?`<select data-k="rel" aria-label="歸屬新聞稿">${rels.map((r,i)=>`<option value="${i}" ${i===it.rel?'selected':''}>稿${i+1}：${esc(r.slice(0,14))}…</option>`).join('')}</select>`:'';
+      const scoreTxt=(it.title||it.text)?` ${Math.round(it.score*100)}%${basisTxt(it)}`:'';
+      return `<div class="item ${it.platform?'sub':''}" data-id="${it.id}">
+        <input type="text" id="m-${it.id}" data-k="media" list="dlMain" value="${esc(it.media)}" placeholder="主媒體" aria-label="主媒體">
+        <input type="text" id="p-${it.id}" data-k="platform" list="dlAgg" value="${esc(it.platform)}" placeholder="轉載平台（主列留空）" aria-label="轉載平台">
+        <input type="text" id="t-${it.id}" class="ttl" data-k="title" value="${esc(it.title)}" placeholder="${it.platform?'轉載可不填標題':'報導標題'}" aria-label="報導標題">
+        <button class="del" data-drop="${it.id}" aria-label="排除這列" title="排除（可在下方復原）">✕</button>
+        <div class="meta">
+          ${it.platform?'':`<span class="chip ${g.cls}">${g.label}${scoreTxt}</span>`}
+          ${it.flag?`<span class="chip c-warn">${esc(it.flag)}</span>`:''}
+          ${it.looked?`<span class="chip c-muted" title="${esc((it.text||'').slice(0,200))}">${it.lookFail?'讀不到內容':'已讀取內文'}</span>`:''}
+          ${it.platform?'':`<input type="text" id="r-${it.id}" data-k="reporter" value="${esc(it.reporter||'')}" placeholder="記者姓名" aria-label="記者姓名">`}
+          ${relSel}
+          ${it.url?`<a class="url" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.url)}</a>`:`<span class="chip c-muted">無連結（廣播等）</span>`}
+        </div></div>`;
+    }).join('');
+    renderStats();
+  }
+  function renderStats(){
+    const flagged=items.filter(i=>!i.excluded&&(i.flag||!i.media)).length;
+    const inc=items.filter(i=>!i.excluded), ex=items.length-inc.length;
+    const media2=new Set(inc.filter(i=>i.media).map(i=>i.media));
+    $('stats').innerHTML=`<span><strong>${media2.size}</strong>家媒體</span><span><strong>${inc.length}</strong>則露出</span>`+
+      `<span><strong>${inc.filter(i=>!i.platform).length}</strong>則主報導</span>`+
+      (flagged?`<span class="chip c-warn">${flagged} 列待確認媒體</span>`:'')+
+      (ex?`<span class="chip c-bad">已排除 ${ex} 則無關連結</span>`:'')+
+      (lastSkipped?`<span class="chip c-muted">略過 ${lastSkipped} 個非新聞連結</span>`:'');
+  }
+  function renderOut(){
+    $('out').textContent=Core.build({items, releases:releases(), date:$('date').value, mains, optCount:$('optCount').checked, optInline:false});
+    renderSheet();
+    store.set('mx_draft', JSON.stringify({rel:$('releases').value, body:$('bodies').value, kw:$('kw').value, kwEdited, date:$('date').value, paste:$('paste').value, items, relMeta}));
+    updatePending();
+  }
+  /* ---- Google 試算表 ---- */
+  let relMeta=[];
+  function renderRelMeta(){
+    const rels=releases(); const box=$('relMeta');
+    const sig=rels.join('\n'); if(box.dataset.sig===sig) return; box.dataset.sig=sig;
+    box.innerHTML=(rels.length?rels:['（未填新聞稿標題）']).map((r,i)=>{ const m=relMeta[i]||{};
+      return `<div class="rm" data-i="${i}"><div class="rmt">稿${i+1}：${esc(r)}</div>
+        <label>校內發稿日期<input type="date" id="rmd-${i}" data-f="date" value="${esc(m.date||'')}"></label>
+        <label>編號<input type="text" id="rmn-${i}" data-f="no" value="${esc(m.no||'')}" placeholder="選填"></label>
+        <label class="full">校內發稿連結<input type="text" id="rml-${i}" data-f="link" value="${esc(m.link||'')}" placeholder="留空＝自動帶本校官網連結"></label></div>`; }).join('');
+  }
+  function sheetData(){
+    const rows=Core.sheetRows({items, releases:releases(), relMeta, date:$('date').value, mains, includeSelf:$('optSheetSelf').checked});
+    return $('optHeader').checked?[Core.SHEET_HEAD, ...rows]:rows;
+  }
+  function renderSheet(){
+    renderRelMeta();
+    const rows=Core.sheetRows({items, releases:releases(), relMeta, date:$('date').value, mains, includeSelf:$('optSheetSelf').checked});
+    $('sheet').innerHTML=`<thead><tr>${Core.SHEET_HEAD.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>`+
+      (rows.length?rows.map(r=>`<tr>${r.map(c=>`<td title="${esc(c)}">${esc(c)}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="8">沒有資料</td></tr>`)+`</tbody>`;
+  }
+  $('relMeta').addEventListener('input',e=>{ const f=e.target.dataset.f; if(!f) return; const i=+e.target.closest('.rm').dataset.i; relMeta[i]=Object.assign({},relMeta[i],{[f]:e.target.value.trim()}); renderOut(); });
+  $('optHeader').addEventListener('change',renderSheet);
+  $('optSheetSelf').addEventListener('change',renderSheet);
+  function setTab(sheet){ $('tabLine').setAttribute('aria-selected',!sheet); $('tabSheet').setAttribute('aria-selected',sheet); $('paneLine').hidden=sheet; $('paneSheet').hidden=!sheet; store.set('mx_tab',sheet?'sheet':'line'); }
+  $('tabLine').onclick=()=>setTab(false); $('tabSheet').onclick=()=>setTab(true);
+  function copyText(t, okMsg, selEl){
+    const fallback=()=>{ if(selEl){ const r=document.createRange(); r.selectNodeContents(selEl); const s=getSelection(); s.removeAllRanges(); s.addRange(r); } toast('瀏覽器不允許自動複製，已選取內容，請按 Ctrl+C / ⌘C'); };
+    try{ navigator.clipboard.writeText(t).then(()=>toast(okMsg),fallback); }catch(e){ fallback(); }
+  }
+  $('btnCopySheet').onclick=()=>copyText(Core.toTSV(sheetData()),'已複製，到 Google 試算表點一格後貼上', $('sheet'));
+  function refresh(){ renderItems(); renderOut(); }
+
+  function runParse(append){
+    const r=Core.parse($('paste').value, mains, aggs);
+    if(r.releases.length){ const cur=releases(); r.releases.forEach(t=>{ if(!cur.includes(t)) cur.push(t); }); $('releases').value=cur.join('\n'); }
+    if(r.date) $('date').value=r.date;
+    lastSkipped=r.skipped||0;
+    if(append){ const have=new Set(items.map(i=>i.url)); items=items.concat(r.items.filter(i=>!have.has(i.url))); }
+    else items=r.items;
+    // 主列無標題時，從同媒體其他列借
+    refresh();
+  }
+
+  $('items').addEventListener('input',e=>{
+    const k=e.target.dataset.k; if(!k) return;
+    const it=items.find(x=>x.id===e.target.closest('.item').dataset.id); if(!it) return;
+    if(k==='rel'){ it.rel=+e.target.value; it.relLocked=true; refresh(); return; }
+    it[k]=e.target.value.trim(); if(k==='media'&&it.media) it.flag='';
+    const rels=releases(); if(k==='title') { Core.assign(items,rels,bodies()); }
+    renderStats(); renderOut();
+    if(k==='title'){ const chip=e.target.closest('.item').querySelector('.meta .chip'); if(chip && !it.platform){ const g=Core.grade(it.score,!!it.title); chip.className='chip '+g.cls; chip.textContent=g.label+(it.title?` ${Math.round(it.score*100)}%${basisTxt(it)}`:''); } }
+  });
+  $('items').addEventListener('change',e=>{ const k=e.target.dataset.k; if(k==='media'||k==='platform'||k==='title') refresh(); });
+  $('items').addEventListener('click',e=>{ const id=e.target.dataset.drop; if(!id) return; const it=items.find(x=>x.id===id); if(!it) return;
+    it.keep=false; items.forEach(x=>{ if(x.parent===id && x.keep===undefined) x.keep=false; }); refresh(); });
+  $('exItems').addEventListener('click',e=>{ const id=e.target.dataset.keep; if(!id) return; const it=items.find(x=>x.id===id); if(!it) return;
+    it.keep=true; items.forEach(x=>{ if(x.parent===id && x.keep===false) delete x.keep; }); refresh(); });
+  $('btnParse').onclick=()=>runParse(false);
+  $('btnAppend').onclick=()=>runParse(true);
+  $('btnSample').onclick=()=>{ $('bodies').value=SAMPLE_BODY; kwEdited=false; $('releases').value=SAMPLE_RELEASE; $('date').value='2026-11-05'; $('paste').value=SAMPLE_PASTE; autoKw(); runParse(false); };
+  $('btnClear').onclick=()=>{ $('paste').value=''; $('releases').value=''; $('bodies').value=''; $('kw').value=''; kwEdited=false; items=[]; refresh(); };
+  $('btnAdd').onclick=()=>{ items.push({id:Math.random().toString(36).slice(2,9),media:'',platform:'',title:'',url:'',host:'',flag:'',rel:0}); renderItems(); };
+  $('releases').addEventListener('input',refresh);
+  $('date').addEventListener('input',renderOut);
+  $('optCount').addEventListener('change',renderOut);
+  $('btnCfgSave').onclick=()=>{ store.set('mx_main_v7',$('cfgMain').value); store.set('mx_agg_v7',$('cfgAgg').value); store.set('mx_endpoint',$('cfgEndpoint').value.trim()); syncEndpointUI(); loadCfg(); refresh(); toast('設定已儲存，已重新排序'); };
+  $('btnCfgReset').onclick=()=>{ store.set('mx_main_v7',DEFAULT_MAIN); store.set('mx_agg_v7',DEFAULT_AGG); loadCfg(); refresh(); toast('已恢復預設媒體設定'); };
+  $('btnCopy').onclick=()=>copyText($('out').textContent,'已複製，可以貼到 LINE 了',$('out'));
+  /* ---- 網路搜尋（Google Apps Script 搜尋服務）---- */
+  const DEFAULT_ENDPOINT='';
+  let webResults=[], searching=false;
+  function endpoint(){ return (store.get('mx_endpoint')||DEFAULT_ENDPOINT||'').trim(); }
+  function syncEndpointUI(){
+    $('cfgEndpoint').value=endpoint(); const ok=!!endpoint(); $('btnSearch').disabled=!ok;
+    $('webHint').textContent=ok?'按「搜尋網路露出」，約 30–90 秒跑完。找到的報導列在下面，與新聞稿相關的已預先勾選，確認後按「把勾選的加入彙編」。'
+      :'還沒有設定搜尋服務：請管理者到頁面下方「媒體排序與網域設定」貼上 Google Apps Script 網址。';
+  }
+  /* 關鍵詞 */
+  let kwEdited=false;
+  function autoKw(){ if(kwEdited) return; $('kw').value=Core.keywords(releases(), bodies()).join(' | '); }
+  $('kw').addEventListener('input',()=>{ kwEdited=true; renderOut(); });
+  $('btnKwReset').onclick=()=>{ kwEdited=false; autoKw(); renderOut(); toast('已從新聞稿全文重新抓取關鍵詞'); };
+  $('bodies').addEventListener('input',()=>{
+    if(!$('releases').value.trim()){ const ts=bodies().map(b=>b.split('\n')[0].trim()).filter(t=>t.length>=8&&t.length<=70&&!/[。]$/.test(t)); if(ts.length) $('releases').value=ts.join('\n'); }
+    autoKw(); refresh(); });
+  $('releases').addEventListener('input',autoKw);
+  /* 待查連結 */
+  function pendingUrls(){
+    return items.filter(it=>it.url && !it.excluded && !it.looked && it.media!=='本校官網' && (
+      (!it.platform && (!it.title || it.score<0.3)) || /短網址|未知網域|請填主媒體/.test(it.flag||'')
+    )).map(it=>it.url);
+  }
+  function updatePending(){ const el=$('pendCount'); if(el) el.textContent=pendingUrls().length; }
+  function applyLookup(list){
+    let n=0;
+    for(const r of (list||[])){
+      for(const it of items.filter(x=>x.url===r.url)){
+        it.looked=true; it.lookFail=!r.ok;
+        if(!r.ok) continue;
+        n++;
+        if(r.text) it.text=r.text.slice(0,1500);
+        const t=Core.cleanPageTitle(r.title);
+        if(!it.platform && !it.title && t && it.media!=='本校官網') it.title=t;
+        if(r.final_url && r.final_url!==r.url){
+          it.resolved=r.final_url; const h=Core.host(r.final_url);
+          const dm=Core.byDomain(mains,h,r.final_url), da=Core.byDomain(aggs,h,r.final_url);
+          if(dm && !it.platform && (it.flag||!it.media)){ it.media=dm.name; it.flag=''; }
+          else if(da && !it.platform){ it.platform=da.name; it.flag=it.media?'':'請填主媒體'; }
+          else if(/短網址|未知網域/.test(it.flag||'') && (dm||da)) it.flag='';
+        }
+      }
+    }
+    return n;
+  }
+  function showWeb(data, fresh){
+    if(fresh){ const filled=applyLookup(data.lookup); if(filled){ refresh(); toast(`已讀取 ${filled} 則待查連結的標題與內文`); } }
+    const rels=releases(), bds=bodies(), nrel=Math.max(rels.length,bds.length);
+    webResults=(data.items||[]).map((r,i)=>{ const m=Core.mapSource(r,mains,aggs);
+      let best={score:0,basis:'title'}; for(let k=0;k<nrel;k++){ const x=Core.relScore(r.title,r.text,rels[k]||'',bds[k]||''); if(x.score>best.score) best=x; }
+      const score=best.score, basis=best.basis;
+      const inItems=items.some(x=>x.url===r.url || (x.resolved&&x.resolved===r.url) || (x.title && x.media===m.media && Core.similarity(x.title,r.title)>0.9));
+      return {...r, ...m, score, basis, inItems, idx:i, pick:!inItems && (!nrel || score>=Core.CUT)}; })
+      .sort((a,b)=>(b.pick-a.pick)||(b.score-a.score));
+    const when=data.generated_at?new Date(data.generated_at).toLocaleString('zh-TW',{hour12:false}):'';
+    const withText=webResults.filter(r=>r.text).length;
+    $('webMeta').innerHTML=`<span>搜尋時間 ${esc(when)}</span><span>找到 <strong>${webResults.length}</strong> 則（讀到內文 ${withText} 則）</span>`+
+      `<span><strong>${webResults.filter(r=>r.pick).length}</strong> 則與新聞稿相關且尚未納入</span>`+(data.query?`<span class="chip c-muted">關鍵詞：${esc(data.query)}</span>`:'');
+    renderWeb();
+  }
+  async function runSearch(){
+    const ep=endpoint(); if(searching||!ep) return;
+    const keywords=[...new Set([...releases(), ...$('kw').value.split(/[|｜]/).map(s=>s.trim()).filter(Boolean)])];
+    const urls=$('optLookup').checked?pendingUrls():[];
+    if(!keywords.length && !urls.length){ toast('請先在 STEP 1 填新聞稿標題，或輸入關鍵詞'); return; }
+    searching=true; const btn=$('btnSearch'); btn.disabled=true; const t0=Date.now();
+    btn.textContent='搜尋中… 0 秒';
+    const tick=setInterval(()=>{ btn.textContent=`搜尋中… ${Math.round((Date.now()-t0)/1000)} 秒`; },1000);
+    $('webMeta').innerHTML=`<span>正在搜尋 ${keywords.length} 個關鍵詞${urls.length?`、讀取 ${urls.length} 個待查連結`:''}，通常 30–90 秒，請勿關閉頁面</span>`;
+    try{
+      const res=await fetch(ep,{method:'POST', body:JSON.stringify({keywords, urls, days:+$('days').value||3})});
+      if(!res.ok) throw new Error('搜尋服務回應 HTTP '+res.status);
+      const data=await res.json(); if(!data.ok) throw new Error(data.error||'搜尋服務回報錯誤');
+      store.set('mx_web', JSON.stringify(data));
+      showWeb(data, true);
+    }catch(e){
+      const offline=e instanceof TypeError && !location.hostname.endsWith('.github.io');
+      $('webMeta').innerHTML=`<span class="chip c-bad">搜尋失敗：${esc(offline?'這個預覽頁不能連外，請使用 GitHub 上的網頁':String(e.message||e))}</span>`+(offline?'':'<span>請稍後再試；一直失敗的話，請到下方設定按「測試搜尋服務」。</span>');
+    }finally{ clearInterval(tick); searching=false; btn.textContent='搜尋網路露出'; btn.disabled=!endpoint(); }
+  }
+  $('btnSearch').onclick=runSearch;
+  $('btnTestEp').onclick=async()=>{
+    const ep=$('cfgEndpoint').value.trim(); if(!ep){ toast('請先貼上搜尋服務網址'); return; }
+    toast('測試中…');
+    try{ const r=await fetch(ep); const d=await r.json(); toast(d.ok?'搜尋服務連線正常，記得按「儲存設定」':'搜尋服務有回應，但內容不正確'); }
+    catch(e){ toast('連不上搜尋服務：請確認網址結尾是 /exec，且部署時「誰可以存取」選了「所有人」'); }
+  };
+  function renderWeb(){
+    const nrel=releases().length||bodies().length;
+    $('webList').innerHTML=webResults.map(r=>{ const g=Core.grade(r.score,!!nrel);
+      return `<div class="wr ${r.inItems||(!r.pick&&r.score<Core.CUT)?'dim':''}"><input type="checkbox" id="w-${r.idx}" data-w="${r.idx}" ${r.pick?'checked':''} ${r.inItems?'disabled':''} aria-label="加入彙編">
+        <div class="wt"><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a>
+        <div class="wm"><strong>${esc(r.platform?`${r.media||'?'}/${r.platform}`:r.media)}</strong>${r.published?`<span>${esc(r.published.slice(0,16).replace('T',' '))}</span>`:''}
+          ${nrel?`<span class="chip ${g.cls}">${g.label} ${Math.round(r.score*100)}%${r.basis==='content'?'・比對內文':r.basis==='body'?'・比對全文':''}</span>`:''}
+          ${r.inItems?'<span class="chip c-ok">已在彙編中</span>':''}${r.flag&&!r.inItems?`<span class="chip c-warn">${esc(r.flag)}</span>`:''}</div></div></div>`; }).join('');
+    $('btnAddWeb').hidden=!webResults.some(r=>!r.inItems);
+  }
+  $('webList').addEventListener('change',e=>{ const i=e.target.dataset.w; if(i==null) return; const r=webResults.find(x=>x.idx==i); if(r) r.pick=e.target.checked; });
+  $('btnAddWeb').onclick=()=>{ const add=webResults.filter(r=>r.pick && !r.inItems); if(!add.length){ toast('沒有勾選要加入的報導'); return; }
+    for(const r of add){ items.push({id:Math.random().toString(36).slice(2,9), media:r.media, platform:r.platform, title:r.title, text:(r.text||'').slice(0,1500), url:r.url, host:Core.host(r.url), flag:r.flag||'網路搜尋', rel:null, parent:null, reporter:'', date:(r.published||'').slice(0,10), keep:true}); r.inItems=true; r.pick=false; }
+    refresh(); renderWeb(); toast(`已加入 ${add.length} 則網路搜尋到的報導`); };
+
+  let tt; function toast(m){ $('toast').textContent=m; clearTimeout(tt); tt=setTimeout(()=>$('toast').textContent='',3500); }
+
+  loadCfg();
+  const today=new Date(); $('date').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  let draft=null; try{ draft=JSON.parse(store.get('mx_draft')||'null'); }catch(e){}
+  if(draft && draft.items && draft.items.length){ $('releases').value=draft.rel||''; $('bodies').value=draft.body||''; $('kw').value=draft.kw||''; kwEdited=!!draft.kwEdited; $('date').value=draft.date||$('date').value; $('paste').value=draft.paste||''; items=draft.items; relMeta=draft.relMeta||[]; refresh(); }
+  else $('btnSample').click();
+  if(store.get('mx_tab')==='sheet') setTab(true);
+  syncEndpointUI();
+  try{ const w=JSON.parse(store.get('mx_web')||'null'); if(w) showWeb(w,false); }catch(e){}
+}
+</script>
+
+</body>
+</html>
