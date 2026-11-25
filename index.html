@@ -34,7 +34,9 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:1
 .wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
 header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;border-bottom:2px solid var(--ink);padding-bottom:10px}
 h1{font-family:var(--f-display);font-size:1.75rem;margin:0;letter-spacing:.04em;text-wrap:balance}
-header p{margin:0;color:var(--muted);font-size:.9rem}
+header p{margin:0;color:var(--muted);font-size:.9rem;flex:1 1 300px}
+.resetbtn{margin-left:auto;align-self:center}
+.resetbtn.armed{background:var(--bad);border-color:var(--bad);color:#fff}
 .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:20px;align-items:start}
 @media (max-width:960px){.grid{grid-template-columns:minmax(0,1fr)}}
 .col{display:flex;flex-direction:column;gap:20px;min-width:0}
@@ -52,7 +54,7 @@ textarea:focus,input:focus,button:focus-visible,summary:focus-visible{outline:2p
 @media (max-width:560px){.row2{grid-template-columns:minmax(0,1fr)}}
 .btns{display:flex;flex-wrap:wrap;gap:8px}
 button{font:inherit;font-size:.9rem;border-radius:4px;padding:7px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
-button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:500}
+button.primary{background:var(--ink);color:var(--surface);border-color:var(--ink);font-weight:500}
 button:hover{filter:brightness(.96)}
 .stats{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .stats strong{color:var(--ink);font-size:1.1rem;margin-right:2px}
@@ -92,9 +94,11 @@ select{font:inherit;font-size:.8rem;color:var(--ink);background:var(--surface-2)
 .btnlink[aria-disabled="true"]{opacity:.45;pointer-events:none}
 button:disabled{opacity:.45;cursor:not-allowed}
 .kwchips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.kwchip{display:inline-flex;align-items:center;gap:2px;padding:2px 4px 2px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:.85rem}
+.kwchip{display:inline-flex;align-items:center;gap:2px;padding:2px 4px 2px 10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);font-size:.85rem}
 .kwchip button{border:0;background:none;color:inherit;padding:0 6px;font-size:.9rem;line-height:1}
 .kwchips input{width:9em;padding:3px 10px;border-radius:999px;font-size:.85rem;border-style:dashed}
+.webhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px}
+.webbasis{font-size:.8rem;color:var(--muted);min-width:0;overflow-wrap:anywhere}
 .kwsrc{font-size:.75rem;color:var(--ok)}
 .srcline{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:.85rem;color:var(--muted)}
 .srcline select{font-size:.85rem}
@@ -151,6 +155,7 @@ details.cfg summary{cursor:pointer;font-weight:500}
   <header>
     <h1>媒體露出彙編</h1>
     <p>貼上記者在 LINE 回報的連結，自動辨識媒體、比對標題、依序排好，產出給長官的輿情彙編。</p>
+    <button id="btnReset" class="resetbtn">全部清空</button>
   </header>
 
   <div class="grid">
@@ -177,8 +182,8 @@ details.cfg summary{cursor:pointer;font-weight:500}
       </section>
 
       <section class="panel" aria-labelledby="h-web" id="webPanel">
-        <div class="step"><b>STEP 2+</b><h2 id="h-web">網路搜尋媒體露出</h2></div>
-        <p class="hint" id="webHint"></p>
+        <div class="webhead"><div class="step"><b>STEP 2+</b><h2 id="h-web">網路搜尋媒體露出</h2></div><span class="webbasis" id="webBasis"></span></div>
+        <p class="hint" id="webHint" hidden></p>
         <div class="f">
           <span>搜尋關鍵詞 <span id="kwSrc" class="kwsrc"></span>（從新聞稿全文自動辨識，可按 × 刪除或自行新增；新聞稿標題會自動一起搜）</span>
           <div class="kwchips" id="kwChips"></div>
@@ -199,7 +204,6 @@ details.cfg summary{cursor:pointer;font-weight:500}
           <button class="primary" id="btnSearch">搜尋網路露出</button>
           <button id="btnKwReset">重新辨識關鍵詞</button>
         </div>
-        <div class="stats" id="webMeta"></div>
         <div class="tiles" id="webTiles" hidden>
           <div class="tile"><span>找到報導</span><strong id="tFound">0</strong></div>
           <div class="tile"><span>判斷相關</span><strong id="tRel">0</strong></div>
@@ -215,6 +219,7 @@ details.cfg summary{cursor:pointer;font-weight:500}
           <button id="btnPickNone">全部取消</button>
           <button class="primary" id="btnAddWeb">把勾選的 0 則加入彙編</button>
         </div>
+        <div class="stats" id="webMeta"></div>
       </section>
 
       <section class="panel" aria-labelledby="h-s3">
@@ -752,9 +757,9 @@ if(typeof document!=='undefined'){
       (lastSkipped?`<span class="chip c-muted">略過 ${lastSkipped} 個非新聞連結</span>`:'');
   }
   function renderOut(){
+    const rt=releases().filter(t=>t!=='（未填標題）'); $('webBasis').textContent=rt.length?`依據 STEP 1：${rt.join('、')}`:'先在 STEP 1 填新聞稿，搜尋會更準';
     $('out').textContent=Core.build({items:officialItems(), releases:releases(), date:$('date').value, mains, optCount:$('optCount').checked, optInline:false});
     renderSheet();
-    store.set('mx_draft_v3', JSON.stringify({rels, kw:$('kw').value, kwEdited, date:$('date').value, paste:$('paste').value, items}));
     updatePending();
   }
   /* ---- Google 試算表 ---- */
@@ -821,6 +826,18 @@ if(typeof document!=='undefined'){
     it.keep=true; items.forEach(x=>{ if(x.parent===id && x.keep===false) delete x.keep; }); refresh(); });
   $('btnParse').onclick=()=>runParse(false);
   $('btnAppend').onclick=()=>runParse(true);
+  function resetAll(){
+    rels=[blankRel()]; items=[]; webResults=[]; kwEdited=false; kwFrom=''; kwSig=''; lastSkipped=0;
+    $('paste').value=''; $('kw').value=''; $('webMeta').innerHTML='';
+    const t=new Date(); $('date').value=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+    renderRels(); renderKw(); renderWeb(); refresh(); window.scrollTo(0,0);
+  }
+  let resetTimer=null;
+  $('btnReset').onclick=()=>{
+    const b=$('btnReset');
+    if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent='再按一次確定清空'; resetTimer=setTimeout(()=>{ b.classList.remove('armed'); b.textContent='全部清空'; },3000); return; }
+    clearTimeout(resetTimer); b.classList.remove('armed'); b.textContent='全部清空'; resetAll(); toast('已清空，可以開始下一份彙編');
+  };
   $('btnClear').onclick=()=>{ $('paste').value=''; rels=[blankRel()]; renderRels(); $('kw').value=''; renderKw(); kwEdited=false; items=[]; refresh(); };
   $('btnAdd').onclick=()=>{ items.push({id:Math.random().toString(36).slice(2,9),media:'',platform:'',title:'',url:'',host:'',flag:'',rel:0}); renderItems(); };
   $('date').addEventListener('input',renderOut);
@@ -834,7 +851,7 @@ if(typeof document!=='undefined'){
   function endpoint(){ return (store.get('mx_endpoint')||DEFAULT_ENDPOINT||'').trim(); }
   function syncEndpointUI(){
     $('cfgEndpoint').value=endpoint(); const ok=!!endpoint(); $('btnSearch').disabled=!ok;
-    $('webHint').textContent=ok?'按「搜尋網路露出」，約 30–90 秒跑完。找到的報導列在下面，與新聞稿相關的已預先勾選，確認後按「把勾選的加入彙編」。'
+    $('webHint').hidden=ok; $('webHint').textContent=ok?'按「搜尋網路露出」，約 30–90 秒跑完。找到的報導列在下面，與新聞稿相關的已預先勾選，確認後按「把勾選的加入彙編」。'
       :'還沒有設定搜尋服務：請管理者到頁面下方「媒體排序與網域設定」貼上 Google Apps Script 網址。';
   }
   /* 關鍵詞 */
@@ -919,20 +936,19 @@ if(typeof document!=='undefined'){
     const urls=$('optLookup').checked?pendingUrls():[];
     if(!keywords.length && !urls.length){ toast('請先在 STEP 1 填新聞稿標題，或輸入關鍵詞'); return; }
     searching=true; const btn=$('btnSearch'); btn.disabled=true; const t0=Date.now();
-    btn.textContent='搜尋中… 0 秒';
+    btn.textContent='搜尋中… 0 秒'; webResults=[]; renderWeb();
     const tick=setInterval(()=>{ btn.textContent=`搜尋中… ${Math.round((Date.now()-t0)/1000)} 秒`; },1000);
     $('webMeta').innerHTML=`<span>正在搜尋 ${keywords.length} 個關鍵詞${urls.length?`、讀取 ${urls.length} 個待查連結`:''}，通常 30–90 秒，請勿關閉頁面</span>`;
     try{
       const res=await fetch(ep,{method:'POST', body:JSON.stringify({keywords, urls, days:+$('days').value||3, releases:releases(), bodies:bodies().map(b=>b.slice(0,3000)), sites:searchSites()})});
       if(!res.ok) throw new Error('搜尋服務回應 HTTP '+res.status);
       const data=await res.json(); if(!data.ok) throw new Error(data.error||'搜尋服務回報錯誤');
-      store.set('mx_web', JSON.stringify(data));
       if(data.log) setIai(data.log.some(l=>/^iAI 判斷 /.test(l))?'iai':data.log.some(l=>/iAI 未設定/.test(l))?'none':data.log.some(l=>/iAI 判斷失敗/.test(l))?'error':'');
       showWeb(data, true);
     }catch(e){
       const offline=e instanceof TypeError && !location.hostname.endsWith('.github.io');
       $('webMeta').innerHTML=`<span class="chip c-bad">搜尋失敗：${esc(offline?'這個預覽頁不能連外，請使用 GitHub 上的網頁':String(e.message||e))}</span>`+(offline?'':'<span>請稍後再試；一直失敗的話，請到下方設定按「測試搜尋服務」。</span>');
-    }finally{ clearInterval(tick); searching=false; btn.textContent='搜尋網路露出'; btn.disabled=!endpoint(); }
+    }finally{ clearInterval(tick); searching=false; btn.textContent='搜尋網路露出'; btn.disabled=!endpoint(); renderWeb(); }
   }
   $('btnSearch').onclick=runSearch;
   $('btnTestEp').onclick=async()=>{
@@ -959,9 +975,11 @@ if(typeof document!=='undefined'){
     const sorter=(a,b)=>mediaRank(a)-mediaRank(b) || (a.media||'').localeCompare(b.media||'') || (!!a.platform)-(!!b.platform) || (b.published||'').localeCompare(a.published||'');
     const rel=webResults.filter(isRel).sort(sorter), other=webResults.filter(r=>!isRel(r)).sort(sorter);
     const has=webResults.length>0;
-    $('webTiles').hidden=$('webTable').hidden=$('webBtns').hidden=!has;
+    $('webTiles').hidden=$('webTable').hidden=false; $('webBtns').hidden=!has;
     $('tFound').textContent=webResults.length; $('tRel').textContent=rel.filter(r=>!r.inItems).length; $('tIn').textContent=webResults.filter(r=>r.inItems).length;
-    $('webList').innerHTML=rel.length?rel.map(webRow).join(''):'<div class="empty">沒有判斷相關的報導，可以展開下方「判斷無關」看看，或增加關鍵詞再搜一次。</div>';
+    $('webList').innerHTML=rel.length?rel.map(webRow).join(''):!has?
+      (searching?'<div class="empty">搜尋中，約 30–90 秒，找到的報導會列在這裡…</div>':'<div class="empty">按上方「搜尋網路露出」，找到的報導會依媒體排序列在這裡，勾選後加入彙編。</div>')
+      :'<div class="empty">沒有判斷相關的報導，可以展開下方「判斷無關」看看，或增加關鍵詞再搜一次。</div>';
     $('webOtherList').innerHTML=other.map(webRow).join(''); $('otherCount').textContent=other.length; $('webOther').hidden=!other.length;
     updateAddBtn();
   }
@@ -977,12 +995,11 @@ if(typeof document!=='undefined'){
 
   loadCfg();
   const today=new Date(); $('date').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-  let draft=null; try{ draft=JSON.parse(store.get('mx_draft_v3')||'null'); }catch(e){}
-  if(draft && (draft.items&&draft.items.length || draft.rels&&draft.rels.some(r=>r.title||r.body||r.link))){ rels=draft.rels&&draft.rels.length?draft.rels.map(r=>Object.assign(blankRel(),r)):[blankRel()]; $('kw').value=draft.kw||'';  kwEdited=!!draft.kwEdited; $('date').value=draft.date||$('date').value; $('paste').value=draft.paste||''; items=draft.items||[]; }
-  renderRels(); renderKw(); refresh();
+  // 每次打開都是空白，不帶入上次的內容
+  try{ localStorage.removeItem('mx_draft_v2'); localStorage.removeItem('mx_draft_v3'); localStorage.removeItem('mx_web'); }catch(e){}
+  renderRels(); renderKw(); refresh(); renderWeb();
   if(store.get('mx_tab')==='sheet') setTab(true);
   syncEndpointUI(); updateSiteCount();
-  try{ const w=JSON.parse(store.get('mx_web')||'null'); if(w) showWeb(w,false); }catch(e){}
 }
 </script>
 
