@@ -69,6 +69,15 @@ button:hover{filter:brightness(.96)}
 .c-bad{background:var(--bad-soft);color:var(--bad)} .c-muted{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
 .c-acc{background:var(--accent-soft);color:var(--accent)}
 select{font:inherit;font-size:.8rem;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:2px 6px;max-width:100%}
+.rellist{display:flex;flex-direction:column;gap:12px}
+.relcard{border:1px solid var(--line);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--surface-2);min-width:0}
+.relcard .rc-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:500}
+.relcard .rc-head button{padding:3px 10px;font-size:.8rem;color:var(--muted)}
+.relcard .linkrow{display:flex;gap:8px;min-width:0}
+.relcard .linkrow input{flex:1 1 auto;min-width:0}
+.relcard .linkrow button{flex:none}
+.relcard input,.relcard textarea{background:var(--surface)}
+.rc-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .slog{flex:1 1 100%;font-size:.8rem;color:var(--muted)}
 .slog summary{cursor:pointer}
 .slog div{margin-top:4px;line-height:1.7}
@@ -132,14 +141,13 @@ details.cfg summary{cursor:pointer;font-weight:500}
   <div class="grid">
     <div class="col">
       <section class="panel" aria-labelledby="h-s1">
-        <div class="step"><b>STEP 1</b><h2 id="h-s1">新聞稿標題與日期</h2></div>
+        <div class="step"><b>STEP 1</b><h2 id="h-s1">今天的校內新聞稿</h2></div>
+        <p class="hint">貼上本校官網的新聞連結，按「讀取」會自動帶入標題、全文和發稿日期（需要搜尋服務）。也可以直接貼標題和全文。同一天有多則新聞稿就按「新增一則新聞稿」。</p>
+        <div id="relList" class="rellist"></div>
         <div class="row2">
-          <label class="f">新聞稿標題（一行一則；填了之後，標題與新聞稿無關的連結會自動排除）
-            <textarea id="releases" rows="2"></textarea></label>
+          <div class="btns"><button id="btnAddRel">＋ 新增一則新聞稿</button></div>
           <label class="f">彙編日期<input type="date" id="date"></label>
         </div>
-        <label class="f">新聞稿全文（建議貼上：記者大幅改寫標題時，會改用全文比對，也會自動抓出搜尋關鍵詞。多則新聞稿依標題順序貼，中間用一行 === 分隔）
-          <textarea id="bodies" rows="5" placeholder="從官網新聞或新聞稿 Word 檔複製全文貼上"></textarea></label>
       </section>
 
       <section class="panel" aria-labelledby="h-s2">
@@ -219,14 +227,13 @@ details.cfg summary{cursor:pointer;font-weight:500}
           </div>
         </div>
         <div id="paneSheet" class="pane" hidden>
-          <div id="relMeta" class="relmeta"></div>
           <div class="sheetwrap"><table class="sheet" id="sheet"></table></div>
           <div class="btns"><button class="primary" id="btnCopySheet">複製表格內容</button></div>
           <div class="opts">
             <label><input type="checkbox" id="optHeader"> 包含表頭列</label>
             <label><input type="checkbox" id="optSheetSelf"> 包含本校官網那一列</label>
           </div>
-          <p class="hint">在 Google 試算表點選「露出媒體」要開始的第一格（通常是「校內發稿日期」欄），直接貼上即可，會自動分欄。</p>
+          <p class="hint">校內發稿日期、連結、編號取自 STEP 1 的新聞稿卡片。在 Google 試算表點選要開始的第一格（「校內發稿日期」欄），直接貼上即可，會自動分欄。</p>
         </div>
         <div class="toast" id="toast" role="status"></div>
       </section>
@@ -583,9 +590,69 @@ if(typeof document!=='undefined'){
     da.innerHTML=aggs.map(m=>`<option value="${esc(m.name)}">`).join('');
   }
   function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-  function bodies(){ const t=$('bodies').value.trim(); return t?t.split(/\n\s*={3,}\s*\n/).map(x=>x.trim()).filter(Boolean):[]; }
+  /* ---- STEP 1 新聞稿卡片 ---- */
+  const blankRel=()=>({title:'',body:'',link:'',date:'',no:''});
+  let rels=[blankRel()];
+  const firstLine=b=>{ const t=(b||'').split('\n')[0].trim(); return t.length>=8&&t.length<=70&&!/[。]$/.test(t)?t:''; };
+  function activeRels(){ return rels.filter(r=>r.title||r.body||r.link); }
+  function bodies(){ return activeRels().map(r=>r.body||''); }
+  function relMetaList(){ return activeRels().map(r=>({date:r.date, no:r.no, link:r.link})); }
+  function officialItems(){
+    // 新聞稿卡片有官網連結、但 LINE 回報裡沒有本校官網那一列時，自動補上
+    const act=activeRels(), extra=[];
+    act.forEach((r,i)=>{ if(!r.link) return;
+      if(items.some(it=>it.url===r.link || (it.media==='本校官網' && !it.platform && (it.rel||0)===i && !it.excluded))) return;
+      extra.push({id:'official-'+i, media:'本校官網', platform:'', title:'', url:r.link, rel:i, auto:true}); });
+    return items.concat(extra);
+  }
+  function renderRels(){
+    $('relList').innerHTML=rels.map((r,i)=>`<div class="relcard" data-i="${i}">
+      <div class="rc-head"><span>新聞稿 ${i+1}</span>${rels.length>1?`<button data-delrel="${i}">刪除這則</button>`:''}</div>
+      <label class="f">校內官網連結
+        <div class="linkrow"><input type="text" id="rl-${i}" data-f="link" value="${esc(r.link)}" placeholder="https://www.nkust.edu.tw/p/406-1000-……">
+        <button data-fetch="${i}">讀取</button></div></label>
+      <label class="f">新聞稿標題<input type="text" id="rt-${i}" data-f="title" value="${esc(r.title)}"></label>
+      <label class="f">新聞稿全文（記者大幅改寫標題時用來比對，也會從中抓搜尋關鍵詞）
+        <textarea id="rb-${i}" data-f="body" rows="4" placeholder="從官網新聞或新聞稿 Word 檔複製全文貼上">${esc(r.body)}</textarea></label>
+      <div class="rc-meta">
+        <label class="f">校內發稿日期<input type="date" id="rd-${i}" data-f="date" value="${esc(r.date)}"></label>
+        <label class="f">編號（選填）<input type="text" id="rn-${i}" data-f="no" value="${esc(r.no)}"></label>
+      </div></div>`).join('');
+  }
+  $('relList').addEventListener('input',e=>{
+    const f=e.target.dataset.f; if(!f) return; const i=+e.target.closest('.relcard').dataset.i;
+    rels[i][f]=f==='body'?e.target.value:e.target.value.trim();
+    if(f==='body' && !rels[i].title){ const t=firstLine(rels[i].body); if(t){ rels[i].title=t; $('rt-'+i).value=t; } }
+    autoKw(); refresh();
+  });
+  $('relList').addEventListener('change',e=>{
+    if(e.target.dataset.f==='link'){ const i=+e.target.closest('.relcard').dataset.i; const r=rels[i];
+      if(r.link && endpoint() && !r.title && !r.body) fetchOfficial(i); }
+  });
+  $('relList').addEventListener('click',e=>{
+    const d=e.target.dataset;
+    if(d.delrel!==undefined){ rels.splice(+d.delrel,1); if(!rels.length) rels.push(blankRel()); items.forEach(it=>{ delete it.relLocked; }); renderRels(); autoKw(); refresh(); }
+    if(d.fetch!==undefined) fetchOfficial(+d.fetch, true);
+  });
+  $('btnAddRel').onclick=()=>{ rels.push(blankRel()); renderRels(); $('rl-'+(rels.length-1)).focus(); };
+  async function fetchOfficial(i, force){
+    const r=rels[i]; if(!r.link){ toast('請先貼上校內官網連結'); return; }
+    const ep=endpoint(); if(!ep){ toast('還沒有設定搜尋服務，請直接貼上標題和全文'); return; }
+    const btn=document.querySelector(`[data-fetch="${i}"]`); if(btn){ btn.disabled=true; btn.textContent='讀取中…'; }
+    try{
+      const res=await fetch(ep,{method:'POST', body:JSON.stringify({action:'page', urls:[r.link]})});
+      const data=await res.json(); const pg=data.pages&&data.pages[0];
+      if(!data.ok||!pg||!pg.ok) throw new Error(pg&&pg.error||'讀不到這個網頁');
+      const t=Core.cleanPageTitle(pg.title);
+      if(force||!r.title) r.title=t||r.title;
+      if(force||!r.body) r.body=pg.text||r.body;
+      if(!r.date && pg.date) r.date=pg.date;
+      renderRels(); autoKw(); refresh(); toast('已讀取新聞稿標題與全文，請確認內容');
+    }catch(e){ toast('讀取失敗：'+(e instanceof TypeError?'連不上搜尋服務':e.message)+'，請直接貼上標題和全文'); }
+    finally{ const b=document.querySelector(`[data-fetch="${i}"]`); if(b){ b.disabled=false; b.textContent='讀取'; } }
+  }
   function basisTxt(it){ return it.basis==='ai'?'・iAI 判斷':it.basis==='body'?'・比對全文':it.basis==='content'?'・比對內文':''; }
-  function releases(){ return $('releases').value.split(/\n/).map(s=>s.replace(/^新聞稿\s*[-－:：]\s*/,'').trim()).filter(Boolean); }
+  function releases(){ return activeRels().map(r=>r.title||firstLine(r.body)||'（未填標題）'); }
 
   function sortItems(){
     const order=mains.map(m=>m.name), rank=n=>{const i=order.indexOf(n);return i<0?999:i;};
@@ -636,33 +703,21 @@ if(typeof document!=='undefined'){
       (lastSkipped?`<span class="chip c-muted">略過 ${lastSkipped} 個非新聞連結</span>`:'');
   }
   function renderOut(){
-    $('out').textContent=Core.build({items, releases:releases(), date:$('date').value, mains, optCount:$('optCount').checked, optInline:false});
+    $('out').textContent=Core.build({items:officialItems(), releases:releases(), date:$('date').value, mains, optCount:$('optCount').checked, optInline:false});
     renderSheet();
-    store.set('mx_draft_v2', JSON.stringify({rel:$('releases').value, body:$('bodies').value, kw:$('kw').value, kwEdited, date:$('date').value, paste:$('paste').value, items, relMeta}));
+    store.set('mx_draft_v3', JSON.stringify({rels, kw:$('kw').value, kwEdited, date:$('date').value, paste:$('paste').value, items}));
     updatePending();
   }
   /* ---- Google 試算表 ---- */
-  let relMeta=[];
-  function renderRelMeta(){
-    const rels=releases(); const box=$('relMeta');
-    const sig=rels.join('\n'); if(box.dataset.sig===sig) return; box.dataset.sig=sig;
-    box.innerHTML=(rels.length?rels:['（未填新聞稿標題）']).map((r,i)=>{ const m=relMeta[i]||{};
-      return `<div class="rm" data-i="${i}"><div class="rmt">稿${i+1}：${esc(r)}</div>
-        <label>校內發稿日期<input type="date" id="rmd-${i}" data-f="date" value="${esc(m.date||'')}"></label>
-        <label>編號<input type="text" id="rmn-${i}" data-f="no" value="${esc(m.no||'')}" placeholder="選填"></label>
-        <label class="full">校內發稿連結<input type="text" id="rml-${i}" data-f="link" value="${esc(m.link||'')}" placeholder="留空＝自動帶本校官網連結"></label></div>`; }).join('');
-  }
   function sheetData(){
-    const rows=Core.sheetRows({items, releases:releases(), relMeta, date:$('date').value, mains, includeSelf:$('optSheetSelf').checked});
+    const rows=Core.sheetRows({items:officialItems(), releases:releases(), relMeta:relMetaList(), date:$('date').value, mains, includeSelf:$('optSheetSelf').checked});
     return $('optHeader').checked?[Core.SHEET_HEAD, ...rows]:rows;
   }
   function renderSheet(){
-    renderRelMeta();
-    const rows=Core.sheetRows({items, releases:releases(), relMeta, date:$('date').value, mains, includeSelf:$('optSheetSelf').checked});
+    const rows=Core.sheetRows({items:officialItems(), releases:releases(), relMeta:relMetaList(), date:$('date').value, mains, includeSelf:$('optSheetSelf').checked});
     $('sheet').innerHTML=`<thead><tr>${Core.SHEET_HEAD.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>`+
       (rows.length?rows.map(r=>`<tr>${r.map(c=>`<td title="${esc(c)}">${esc(c)}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="8">沒有資料</td></tr>`)+`</tbody>`;
   }
-  $('relMeta').addEventListener('input',e=>{ const f=e.target.dataset.f; if(!f) return; const i=+e.target.closest('.rm').dataset.i; relMeta[i]=Object.assign({},relMeta[i],{[f]:e.target.value.trim()}); renderOut(); });
   $('optHeader').addEventListener('change',renderSheet);
   $('optSheetSelf').addEventListener('change',renderSheet);
   function setTab(sheet){ $('tabLine').setAttribute('aria-selected',!sheet); $('tabSheet').setAttribute('aria-selected',sheet); $('paneLine').hidden=sheet; $('paneSheet').hidden=!sheet; store.set('mx_tab',sheet?'sheet':'line'); }
@@ -676,7 +731,7 @@ if(typeof document!=='undefined'){
 
   function runParse(append){
     const r=Core.parse($('paste').value, mains, aggs);
-    if(r.releases.length){ const cur=releases(); r.releases.forEach(t=>{ if(!cur.includes(t)) cur.push(t); }); $('releases').value=cur.join('\n'); }
+    if(r.releases.length){ r.releases.forEach(t=>{ if(rels.some(x=>x.title===t)) return; const empty=rels.find(x=>!x.title&&!x.body&&!x.link); if(empty) empty.title=t; else rels.push(Object.assign(blankRel(),{title:t})); }); renderRels(); autoKw(); }
     if(r.date) $('date').value=r.date;
     lastSkipped=r.skipped||0;
     if(append){ const have=new Set(items.map(i=>i.url)); items=items.concat(r.items.filter(i=>!have.has(i.url))); }
@@ -701,9 +756,8 @@ if(typeof document!=='undefined'){
     it.keep=true; items.forEach(x=>{ if(x.parent===id && x.keep===false) delete x.keep; }); refresh(); });
   $('btnParse').onclick=()=>runParse(false);
   $('btnAppend').onclick=()=>runParse(true);
-  $('btnClear').onclick=()=>{ $('paste').value=''; $('releases').value=''; $('bodies').value=''; $('kw').value=''; kwEdited=false; items=[]; refresh(); };
+  $('btnClear').onclick=()=>{ $('paste').value=''; rels=[blankRel()]; renderRels(); $('kw').value=''; kwEdited=false; items=[]; refresh(); };
   $('btnAdd').onclick=()=>{ items.push({id:Math.random().toString(36).slice(2,9),media:'',platform:'',title:'',url:'',host:'',flag:'',rel:0}); renderItems(); };
-  $('releases').addEventListener('input',refresh);
   $('date').addEventListener('input',renderOut);
   $('optCount').addEventListener('change',renderOut);
   $('btnCfgSave').onclick=()=>{ store.set('mx_main_v7',$('cfgMain').value); store.set('mx_agg_v7',$('cfgAgg').value); store.set('mx_endpoint',$('cfgEndpoint').value.trim()); syncEndpointUI(); loadCfg(); refresh(); toast('設定已儲存，已重新排序'); };
@@ -723,10 +777,6 @@ if(typeof document!=='undefined'){
   function autoKw(){ if(kwEdited) return; $('kw').value=Core.keywords(releases(), bodies()).join(' | '); }
   $('kw').addEventListener('input',()=>{ kwEdited=true; renderOut(); });
   $('btnKwReset').onclick=()=>{ kwEdited=false; autoKw(); renderOut(); toast('已從新聞稿全文重新抓取關鍵詞'); };
-  $('bodies').addEventListener('input',()=>{
-    if(!$('releases').value.trim()){ const ts=bodies().map(b=>b.split('\n')[0].trim()).filter(t=>t.length>=8&&t.length<=70&&!/[。]$/.test(t)); if(ts.length) $('releases').value=ts.join('\n'); }
-    autoKw(); refresh(); });
-  $('releases').addEventListener('input',autoKw);
   /* 待查連結 */
   function pendingUrls(){
     return items.filter(it=>it.url && !it.excluded && !it.looked && it.media!=='本校官網' && (
@@ -773,9 +823,10 @@ if(typeof document!=='undefined'){
       (data.log&&data.log.length?`<details class="slog"><summary>搜尋紀錄</summary><div>${data.log.map(l=>esc(l)).join('<br>')}</div></details>`:'');
     renderWeb();
   }
+  function searchSites(){ return [...new Set(mains.concat(aggs).flatMap(m=>m.domains))].filter(d=>!/nkust\.edu\.tw$|news\.google\.com$/.test(d)); }
   async function runSearch(){
     const ep=endpoint(); if(searching||!ep) return;
-    const keywords=[...new Set([...releases(), ...$('kw').value.split(/[|｜]/).map(s=>s.trim()).filter(Boolean)])];
+    const keywords=[...new Set([...releases().filter(t=>t!=='（未填標題）'), ...$('kw').value.split(/[|｜]/).map(s=>s.trim()).filter(Boolean)])];
     const urls=$('optLookup').checked?pendingUrls():[];
     if(!keywords.length && !urls.length){ toast('請先在 STEP 1 填新聞稿標題，或輸入關鍵詞'); return; }
     searching=true; const btn=$('btnSearch'); btn.disabled=true; const t0=Date.now();
@@ -783,7 +834,7 @@ if(typeof document!=='undefined'){
     const tick=setInterval(()=>{ btn.textContent=`搜尋中… ${Math.round((Date.now()-t0)/1000)} 秒`; },1000);
     $('webMeta').innerHTML=`<span>正在搜尋 ${keywords.length} 個關鍵詞${urls.length?`、讀取 ${urls.length} 個待查連結`:''}，通常 30–90 秒，請勿關閉頁面</span>`;
     try{
-      const res=await fetch(ep,{method:'POST', body:JSON.stringify({keywords, urls, days:+$('days').value||3, releases:releases(), bodies:bodies().map(b=>b.slice(0,3000))})});
+      const res=await fetch(ep,{method:'POST', body:JSON.stringify({keywords, urls, days:+$('days').value||3, releases:releases(), bodies:bodies().map(b=>b.slice(0,3000)), sites:searchSites()})});
       if(!res.ok) throw new Error('搜尋服務回應 HTTP '+res.status);
       const data=await res.json(); if(!data.ok) throw new Error(data.error||'搜尋服務回報錯誤');
       store.set('mx_web', JSON.stringify(data));
@@ -819,9 +870,9 @@ if(typeof document!=='undefined'){
 
   loadCfg();
   const today=new Date(); $('date').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-  let draft=null; try{ draft=JSON.parse(store.get('mx_draft_v2')||'null'); }catch(e){}
-  if(draft && draft.items && draft.items.length){ $('releases').value=draft.rel||''; $('bodies').value=draft.body||''; $('kw').value=draft.kw||''; kwEdited=!!draft.kwEdited; $('date').value=draft.date||$('date').value; $('paste').value=draft.paste||''; items=draft.items; relMeta=draft.relMeta||[]; refresh(); }
-  else refresh();
+  let draft=null; try{ draft=JSON.parse(store.get('mx_draft_v3')||'null'); }catch(e){}
+  if(draft && (draft.items&&draft.items.length || draft.rels&&draft.rels.some(r=>r.title||r.body||r.link))){ rels=draft.rels&&draft.rels.length?draft.rels.map(r=>Object.assign(blankRel(),r)):[blankRel()]; $('kw').value=draft.kw||''; kwEdited=!!draft.kwEdited; $('date').value=draft.date||$('date').value; $('paste').value=draft.paste||''; items=draft.items||[]; }
+  renderRels(); refresh();
   if(store.get('mx_tab')==='sheet') setTab(true);
   syncEndpointUI();
   try{ const w=JSON.parse(store.get('mx_web')||'null'); if(w) showWeb(w,false); }catch(e){}
