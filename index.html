@@ -142,7 +142,7 @@ details.cfg summary{cursor:pointer;font-weight:500}
     <div class="col">
       <section class="panel" aria-labelledby="h-s1">
         <div class="step"><b>STEP 1</b><h2 id="h-s1">今天的校內新聞稿</h2></div>
-        <p class="hint">貼上本校官網的新聞連結，會自動帶入標題、全文和發稿日期（要重新讀取就按「讀取」）。也可以直接貼標題和全文。同一天有多則新聞稿就按「新增一則新聞稿」。</p>
+        <p class="hint">貼上本校官網的新聞連結，會自動帶入全文和發稿日期（要重新讀取就按「讀取」）；新聞標題請手動貼上。也可以直接貼標題和全文。同一天有多則新聞稿就按「新增一則新聞稿」。</p>
         <div id="relList" class="rellist"></div>
         <div class="row2">
           <div class="btns"><button id="btnAddRel">＋ 新增一則新聞稿</button></div>
@@ -611,7 +611,7 @@ if(typeof document!=='undefined'){
       <label class="f">校內官網連結
         <div class="linkrow"><input type="text" id="rl-${i}" data-f="link" value="${esc(r.link)}" placeholder="https://www.nkust.edu.tw/p/406-1000-……">
         <button data-fetch="${i}">讀取</button></div></label>
-      <label class="f">新聞稿標題<input type="text" id="rt-${i}" data-f="title" value="${esc(r.title)}"></label>
+      <label class="f">新聞稿標題（請手動貼上）<input type="text" id="rt-${i}" data-f="title" value="${esc(r.title)}" placeholder="從官網新聞頁複製標題貼上"></label>
       <label class="f">新聞稿全文（記者大幅改寫標題時用來比對，也會從中抓搜尋關鍵詞）
         <textarea id="rb-${i}" data-f="body" rows="4" placeholder="從官網新聞或新聞稿 Word 檔複製全文貼上">${esc(r.body)}</textarea></label>
       <div class="rc-meta">
@@ -622,16 +622,17 @@ if(typeof document!=='undefined'){
   $('relList').addEventListener('input',e=>{
     const f=e.target.dataset.f; if(!f) return; const i=+e.target.closest('.relcard').dataset.i;
     rels[i][f]=f==='body'?e.target.value:e.target.value.trim();
+    if(f==='body' && /校安中心|Copyright/i.test(rels[i].body)){ rels[i].body=cleanOfficialBody(rels[i].body); e.target.value=rels[i].body; }
     if(f==='body' && !rels[i].title){ const t=firstLine(rels[i].body); if(t){ rels[i].title=t; $('rt-'+i).value=t; } }
     autoKw(); refresh();
   });
   $('relList').addEventListener('paste',e=>{
     if(e.target.dataset.f!=='link') return; const i=+e.target.closest('.relcard').dataset.i;
-    setTimeout(()=>{ rels[i].link=e.target.value.trim(); if(rels[i].link && endpoint() && !rels[i].title && !rels[i].body) fetchOfficial(i); },0);
+    setTimeout(()=>{ rels[i].link=e.target.value.trim(); if(rels[i].link && endpoint() && !rels[i].body) fetchOfficial(i); },0);
   });
   $('relList').addEventListener('change',e=>{
     if(e.target.dataset.f==='link'){ const i=+e.target.closest('.relcard').dataset.i; const r=rels[i];
-      if(r.link && endpoint() && !r.title && !r.body) fetchOfficial(i); }
+      if(r.link && endpoint() && !r.body) fetchOfficial(i); }
   });
   $('relList').addEventListener('click',e=>{
     const d=e.target.dataset;
@@ -639,6 +640,13 @@ if(typeof document!=='undefined'){
     if(d.fetch!==undefined) fetchOfficial(+d.fetch, true);
   });
   $('btnAddRel').onclick=()=>{ rels.push(blankRel()); renderRels(); $('rl-'+(rels.length-1)).focus(); };
+  /* 去掉官網頁尾：校安專線、版權宣告等 */
+  function cleanOfficialBody(t){
+    const FOOT=/校安中心|緊急聯絡專線|0800-550-995|Copyright|&copy;|©|版權所有|All Rights Reserved|瀏覽人次|點閱次數|最後更新|回上一頁|列印本頁|分享到|友善列印|隱私權|網站導覽|無障礙/i;
+    const lines=String(t||'').split('\n').map(x=>x.trim()).filter(Boolean), out=[];
+    for(const ln of lines){ if(FOOT.test(ln)){ if(out.length>2) break; continue; } out.push(ln); }
+    return out.join('\n').trim();
+  }
   async function fetchOfficial(i, force){
     const r=rels[i]; if(!r.link){ toast('請先貼上校內官網連結'); return; }
     const ep=endpoint(); if(!ep){ toast('還沒有設定搜尋服務，請直接貼上標題和全文'); return; }
@@ -647,11 +655,11 @@ if(typeof document!=='undefined'){
       const res=await fetch(ep,{method:'POST', body:JSON.stringify({action:'page', urls:[r.link]})});
       const data=await res.json(); const pg=data.pages&&data.pages[0];
       if(!data.ok||!pg||!pg.ok) throw new Error(pg&&pg.error||'讀不到這個網頁');
-      const t=Core.cleanPageTitle(pg.title);
-      if(force||!r.title) r.title=t||r.title;
-      if(force||!r.body) r.body=pg.text||r.body;
+      // 標題請同仁手動貼上（官網網頁的標題欄位是校名，不是新聞標題）
+      if(force||!r.body) r.body=cleanOfficialBody(pg.text)||r.body;
       if(!r.date && pg.date) r.date=pg.date;
-      renderRels(); autoKw(); refresh(); toast('已讀取新聞稿標題與全文，請確認內容');
+      renderRels(); autoKw(); refresh(); toast(r.title?'已讀取新聞稿全文，請確認內容':'已讀取全文，請手動貼上新聞標題');
+      if(!r.title){ const el=$('rt-'+i); if(el) el.focus(); }
     }catch(e){ toast('讀取失敗：'+(e instanceof TypeError?'連不上搜尋服務':e.message)+'，請直接貼上標題和全文'); }
     finally{ const b=document.querySelector(`[data-fetch="${i}"]`); if(b){ b.disabled=false; b.textContent='讀取'; } }
   }
