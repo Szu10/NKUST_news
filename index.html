@@ -142,7 +142,7 @@ details.cfg summary{cursor:pointer;font-weight:500}
     <div class="col">
       <section class="panel" aria-labelledby="h-s1">
         <div class="step"><b>STEP 1</b><h2 id="h-s1">今天的校內新聞稿</h2></div>
-        <p class="hint">貼上本校官網的新聞連結，按「讀取」會自動帶入標題、全文和發稿日期（需要搜尋服務）。也可以直接貼標題和全文。同一天有多則新聞稿就按「新增一則新聞稿」。</p>
+        <p class="hint">貼上本校官網的新聞連結，會自動帶入標題、全文和發稿日期（要重新讀取就按「讀取」）。也可以直接貼標題和全文。同一天有多則新聞稿就按「新增一則新聞稿」。</p>
         <div id="relList" class="rellist"></div>
         <div class="row2">
           <div class="btns"><button id="btnAddRel">＋ 新增一則新聞稿</button></div>
@@ -152,7 +152,7 @@ details.cfg summary{cursor:pointer;font-weight:500}
 
       <section class="panel" aria-labelledby="h-s2">
         <div class="step"><b>STEP 2</b><h2 id="h-s2">貼上 LINE 回報內容</h2></div>
-        <p class="hint">直接從 LINE 群組複製整段訊息貼上即可，時間、記者名稱、雜訊都沒關係。也可以貼上舊的彙編格式（【波新聞/蕃新聞】這類標籤會被讀取）。</p>
+        <p class="hint">直接從 LINE 群組複製整段訊息貼上即可，時間、記者名稱、雜訊都沒關係。記者只丟連結沒附標題的，按「辨識連結」後會自動去讀標題。也可以貼上舊的彙編格式（【波新聞/蕃新聞】這類標籤會被讀取）。</p>
         <textarea id="paste" rows="10" placeholder="把 LINE 群組裡記者回報的訊息整段複製貼上"></textarea>
         <div class="btns">
           <button class="primary" id="btnParse">辨識連結</button>
@@ -625,6 +625,10 @@ if(typeof document!=='undefined'){
     if(f==='body' && !rels[i].title){ const t=firstLine(rels[i].body); if(t){ rels[i].title=t; $('rt-'+i).value=t; } }
     autoKw(); refresh();
   });
+  $('relList').addEventListener('paste',e=>{
+    if(e.target.dataset.f!=='link') return; const i=+e.target.closest('.relcard').dataset.i;
+    setTimeout(()=>{ rels[i].link=e.target.value.trim(); if(rels[i].link && endpoint() && !rels[i].title && !rels[i].body) fetchOfficial(i); },0);
+  });
   $('relList').addEventListener('change',e=>{
     if(e.target.dataset.f==='link'){ const i=+e.target.closest('.relcard').dataset.i; const r=rels[i];
       if(r.link && endpoint() && !r.title && !r.body) fetchOfficial(i); }
@@ -736,8 +740,24 @@ if(typeof document!=='undefined'){
     lastSkipped=r.skipped||0;
     if(append){ const have=new Set(items.map(i=>i.url)); items=items.concat(r.items.filter(i=>!have.has(i.url))); }
     else items=r.items;
-    // 主列無標題時，從同媒體其他列借
     refresh();
+    autoTitles();
+  }
+  /* 貼上 LINE 回報後，自動讀取沒有標題、短網址、認不出媒體的連結 */
+  let autoBusy=false;
+  async function autoTitles(){
+    const ep=endpoint(); if(!ep||autoBusy) return;
+    const urls=pendingUrls().slice(0,40); if(!urls.length) return;
+    autoBusy=true; toast(`正在讀取 ${urls.length} 個連結的標題…`);
+    $('btnParse').disabled=true; $('btnAppend').disabled=true;
+    try{
+      const res=await fetch(ep,{method:'POST', body:JSON.stringify({action:'page', urls})});
+      const data=await res.json(); if(!data.ok) throw new Error(data.error||'');
+      const n=applyLookup(data.pages); refresh();
+      const fail=(data.pages||[]).filter(x=>!x.ok).length;
+      toast(`已自動補上 ${n} 則連結的標題${fail?`，${fail} 則讀不到（請手動填）`:''}`);
+    }catch(e){ toast('自動讀取標題失敗，請手動填寫，或稍後按「搜尋網路露出」'); }
+    finally{ autoBusy=false; $('btnParse').disabled=false; $('btnAppend').disabled=false; }
   }
 
   $('items').addEventListener('input',e=>{
