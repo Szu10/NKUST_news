@@ -142,11 +142,10 @@ details.cfg summary{cursor:pointer;font-weight:500}
       <section class="panel" aria-labelledby="h-s2">
         <div class="step"><b>STEP 2</b><h2 id="h-s2">貼上 LINE 回報內容</h2></div>
         <p class="hint">直接從 LINE 群組複製整段訊息貼上即可，時間、記者名稱、雜訊都沒關係。也可以貼上舊的彙編格式（【波新聞/蕃新聞】這類標籤會被讀取）。</p>
-        <textarea id="paste" rows="10" placeholder="例：10:12 自由時報記者 高科大學生勇奪RoboRAVE世界機器人賽季軍 https://news.ltn.com.tw/..."></textarea>
+        <textarea id="paste" rows="10" placeholder="把 LINE 群組裡記者回報的訊息整段複製貼上"></textarea>
         <div class="btns">
           <button class="primary" id="btnParse">辨識連結</button>
           <button id="btnAppend">追加辨識（保留已整理的）</button>
-          <button id="btnSample">載入範例</button>
           <button id="btnClear">清空</button>
         </div>
       </section>
@@ -155,7 +154,7 @@ details.cfg summary{cursor:pointer;font-weight:500}
         <div class="step"><b>STEP 2+</b><h2 id="h-web">網路搜尋媒體露出</h2></div>
         <p class="hint" id="webHint"></p>
         <label class="f">搜尋關鍵詞（新聞稿標題會自動加入；人名、比賽名從全文自動抓取，可自行修改，用 | 分隔）
-          <input type="text" id="kw" placeholder="例：孫傳恩 | RoboRAVE世界機器人冠軍賽"></label>
+          <input type="text" id="kw" placeholder="貼上新聞稿全文後會自動抓取，也可以自己輸入"></label>
         <div class="opts">
           <label><input type="checkbox" id="optLookup" checked> 一併查詢 <strong id="pendCount">0</strong> 則待查連結的標題與內文（沒標題、短網址、或標題差異大的）</label>
           <label>搜尋範圍
@@ -560,40 +559,6 @@ const Core = {
   }
 };
 
-const SAMPLE_BODY=`高科大學子國際競賽舞台爭光，海事學院孫傳恩奪國際機器人賽季軍
-（範例全文）國立高雄科技大學海事學院輪機工程系專科部二年級學生孫傳恩，日前前往日本大阪參加「2026 RoboRAVE世界機器人冠軍賽」，在循線Open組與來自多國的選手同場競技，憑藉穩定的程式控制與機構設計，最終拿下季軍，為校爭光。
-孫傳恩表示，比賽場地與練習環境不同，現場必須快速調整感測器參數，能在國際舞台上獲獎，感謝系上師長的指導與學校的支持。海事學院也表示，學院持續鼓勵學生參與國際競賽，培養跨領域的工程實作能力。`;
-const SAMPLE_RELEASE='高科大學子國際競賽舞台爭光，海事學院孫傳恩奪國際機器人賽季軍';
-const SAMPLE_PASTE=`2026.11.05 星期四
-09:40 公關中心 官網已上架 https://www.nkust.edu.tw/p/406-1000-109486,r1363.php?Lang=zh-tw
-10:12 自由時報記者 高科大學生勇奪RoboRAVE世界機器人賽季軍
-https://news.ltn.com.tw/news/life/breakingnews/5630413
-10:30 鮮週報 日本大阪2026世界機器人冠軍賽 高科大輪機系專二生孫傳恩拿下循線Open季軍 https://freshweekly.tw/?pn=vw&id=36z9701b1ky5#vw
-11:02 波新聞 高科大學子國際競賽舞台爭光 海事學院孫傳恩奪國際機器人賽季軍
-https://www.bo6s.com.tw/news_detail.php?NewsID=118428
-https://n.yam.com/Article/20261105415079
-https://news.owlting.com/articles/1483510
-https://yingfluence99.com/rssnews_detail.php?NewsID=118428
-https://enn.tw/803131/
-11:18 鮮週報 順便分享昨天的稿子 高雄港區觀光季開跑 市府推出夜間遊港行程
-https://freshweekly.tw/?pn=vw&id=88abc123
-https://n.yam.com/Article/20261104000001
-11:19 會議資料在這 https://drive.google.com/file/d/abc123/view
-11:20 漾新聞 高科大孫傳恩世界機器人賽奪季軍　揚名國際 https://reurl.cc/DYV79d
-全國大小事 https://nchn.news/archives/168749
-https://bigtimes.net/archives/136791
-https://businessalert.today/archives/130460
-13:05 寫新聞 高科大學子國際競賽舞台爭光，海事學院孫傳恩奪國際機器人賽季軍 https://enews-life.com.tw/2026/11/646779/
-https://news.owlting.com/articles/1483554
-14:10 今傳媒 高科大學子國際競賽爭光，海事學院孫傳恩奪國際機器人賽季軍
-https://focusnews.com.tw/2026/11/729745/
-PChome https://reurl.cc/gNq1YX
-https://n.yam.com/Article/20261105196701
-https://mknews.com.tw/2026/11/1013559/
-行銷人 https://reurl.cc/dOMAag
-15:30 台新傳媒 高科大孫傳恩世界機器人賽奪季軍　工程實力揚名國際 https://seenews.tw/109905
-16:02 飛揚新聞 高科大學子國際競賽舞台爭光，海事學院孫傳恩奪國際機器人賽季軍 https://fion.ikh.tw/?pn=vw&id=021s6377972q`;
-
 /* ---------- UI ---------- */
 if(typeof document!=='undefined'){
   const $=id=>document.getElementById(id);
@@ -631,7 +596,7 @@ if(typeof document!=='undefined'){
         <span class="ex-t">${esc(it.platform?`${it.media}/${it.platform}`:`${it.media}｜${it.title||'(無標題)'}`)}</span>
         <a class="url" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.url)}</a>
         <button data-keep="${it.id}">納入彙編</button></div>`).join('');
-    if(!shown.length){ box.innerHTML='<div class="empty">還沒有連結。貼上 LINE 回報後按「辨識連結」，或先按「載入範例」看看效果。</div>'; renderStats(); return; }
+    if(!shown.length){ box.innerHTML='<div class="empty">還沒有連結。在 STEP 1 填新聞稿標題，STEP 2 貼上 LINE 回報後按「辨識連結」。</div>'; renderStats(); return; }
     box.innerHTML=shown.map(it=>{
       const g=Core.grade(it.score, !!(it.title||it.text));
       const relSel=rels.length>1?`<select data-k="rel" aria-label="歸屬新聞稿">${rels.map((r,i)=>`<option value="${i}" ${i===it.rel?'selected':''}>稿${i+1}：${esc(r.slice(0,14))}…</option>`).join('')}</select>`:'';
@@ -665,7 +630,7 @@ if(typeof document!=='undefined'){
   function renderOut(){
     $('out').textContent=Core.build({items, releases:releases(), date:$('date').value, mains, optCount:$('optCount').checked, optInline:false});
     renderSheet();
-    store.set('mx_draft', JSON.stringify({rel:$('releases').value, body:$('bodies').value, kw:$('kw').value, kwEdited, date:$('date').value, paste:$('paste').value, items, relMeta}));
+    store.set('mx_draft_v2', JSON.stringify({rel:$('releases').value, body:$('bodies').value, kw:$('kw').value, kwEdited, date:$('date').value, paste:$('paste').value, items, relMeta}));
     updatePending();
   }
   /* ---- Google 試算表 ---- */
@@ -728,7 +693,6 @@ if(typeof document!=='undefined'){
     it.keep=true; items.forEach(x=>{ if(x.parent===id && x.keep===false) delete x.keep; }); refresh(); });
   $('btnParse').onclick=()=>runParse(false);
   $('btnAppend').onclick=()=>runParse(true);
-  $('btnSample').onclick=()=>{ $('bodies').value=SAMPLE_BODY; kwEdited=false; $('releases').value=SAMPLE_RELEASE; $('date').value='2026-11-05'; $('paste').value=SAMPLE_PASTE; autoKw(); runParse(false); };
   $('btnClear').onclick=()=>{ $('paste').value=''; $('releases').value=''; $('bodies').value=''; $('kw').value=''; kwEdited=false; items=[]; refresh(); };
   $('btnAdd').onclick=()=>{ items.push({id:Math.random().toString(36).slice(2,9),media:'',platform:'',title:'',url:'',host:'',flag:'',rel:0}); renderItems(); };
   $('releases').addEventListener('input',refresh);
@@ -738,7 +702,7 @@ if(typeof document!=='undefined'){
   $('btnCfgReset').onclick=()=>{ store.set('mx_main_v7',DEFAULT_MAIN); store.set('mx_agg_v7',DEFAULT_AGG); loadCfg(); refresh(); toast('已恢復預設媒體設定'); };
   $('btnCopy').onclick=()=>copyText($('out').textContent,'已複製，可以貼到 LINE 了',$('out'));
   /* ---- 網路搜尋（Google Apps Script 搜尋服務）---- */
-  const DEFAULT_ENDPOINT='';
+  const DEFAULT_ENDPOINT='https://script.google.com/macros/s/AKfycbwY-KsW_V28hCcjAlo-kqk4wCGk7StU_kwFjiLVxGej9zReDj8SF3jy3X7qNMnguxqHzQ/exec';
   let webResults=[], searching=false;
   function endpoint(){ return (store.get('mx_endpoint')||DEFAULT_ENDPOINT||'').trim(); }
   function syncEndpointUI(){
@@ -844,9 +808,9 @@ if(typeof document!=='undefined'){
 
   loadCfg();
   const today=new Date(); $('date').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-  let draft=null; try{ draft=JSON.parse(store.get('mx_draft')||'null'); }catch(e){}
+  let draft=null; try{ draft=JSON.parse(store.get('mx_draft_v2')||'null'); }catch(e){}
   if(draft && draft.items && draft.items.length){ $('releases').value=draft.rel||''; $('bodies').value=draft.body||''; $('kw').value=draft.kw||''; kwEdited=!!draft.kwEdited; $('date').value=draft.date||$('date').value; $('paste').value=draft.paste||''; items=draft.items; relMeta=draft.relMeta||[]; refresh(); }
-  else $('btnSample').click();
+  else refresh();
   if(store.get('mx_tab')==='sheet') setTab(true);
   syncEndpointUI();
   try{ const w=JSON.parse(store.get('mx_web')||'null'); if(w) showWeb(w,false); }catch(e){}
